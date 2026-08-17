@@ -7,6 +7,13 @@ TITULO_REAL_2026 = (
     "al año 2026."
 )
 
+TITULO_REAL_2018 = (
+    "BOA 9/02/18 - ORDEN ECD/164/2018, de 17 de enero, por la que se convocan las "
+    "pruebas para la obtención directa de los títulos de Técnico y Técnico Superior "
+    "de Formación Profesional en la Comunidad Autónoma de Aragón correspondientes "
+    "al año 2018."
+)
+
 TITULO_REAL_2025 = (
     "BOA 4/08/25 - ORDEN ECD/941/2025, de 24 de julio, por la que se convocan las "
     "pruebas para la obtención directa de los títulos de Técnico y Técnico Superior "
@@ -34,6 +41,17 @@ def test_convocatoria_2026_dispara_r1_y_r2():
 def test_convocatoria_2025_prefijo_ecd_tambien_dispara():
     resultado = evaluar_titulo(TITULO_REAL_2025)
     assert resultado.cubo is Cubo.SEGURO
+
+
+def test_convocatoria_2018_redaccion_mas_antigua_tambien_dispara():
+    # Confirma que el filtro no depende de la redacción de 2026: la orden más
+    # antigua verificada en el backtest (2018) usa una frase ligeramente
+    # distinta ("correspondientes al año 2018" en vez de "año 2026") y debe
+    # disparar igual.
+    resultado = evaluar_titulo(TITULO_REAL_2018)
+    assert resultado.cubo is Cubo.SEGURO
+    assert "R1" in resultado.reglas_disparadas
+    assert "R2" in resultado.reglas_disparadas
 
 
 def test_robustez_quitando_la_palabra_directa():

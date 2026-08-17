@@ -1,10 +1,62 @@
 {
   "2026-08-06": {
     "orden": "ECU/1145/2026",
+    "tipo": "convocatoria",
     "docn_esperados": ["007960414"]
+  },
+  "2025-08-19": {
+    "orden": "ECD/941/2025",
+    "tipo": "correccion_errores",
+    "docn_esperados": ["007951516"]
   },
   "2025-08-04": {
     "orden": "ECD/941/2025",
+    "tipo": "convocatoria",
     "docn_esperados": ["007951236"]
+  },
+  "2024-08-14": {
+    "orden": "ECD/917/2024",
+    "tipo": "convocatoria",
+    "docn_esperados": ["007943110"]
+  },
+  "2023-07-07": {
+    "orden": "ECD/867/2023",
+    "tipo": "convocatoria",
+    "docn_esperados": ["007934361"]
+  },
+  "2022-06-13": {
+    "orden": "ECD/724/2022",
+    "tipo": "correccion_errores",
+    "docn_esperados": ["007925297"]
+  },
+  "2022-06-01": {
+    "orden": "ECD/724/2022",
+    "tipo": "convocatoria",
+    "docn_esperados": ["007925018"]
+  },
+  "2021-05-10": {
+    "orden": "ECD/460/2021",
+    "tipo": "convocatoria",
+    "docn_esperados": ["000241972"]
+  },
+  "2019-12-18": {
+    "orden": "ECD/1655/2019",
+    "tipo": "convocatoria",
+    "docn_esperados": ["000232250"]
+  },
+  "2018-11-20": {
+    "orden": "ECD/1826/2018",
+    "tipo": "convocatoria",
+    "docn_esperados": ["000224818"]
+  },
+  "2018-02-28": {
+    "orden": "ECD/164/2018",
+    "tipo": "correccion_errores",
+    "docn_esperados": ["000219078"]
+  },
+  "2018-02-09": {
+    "orden": "ECD/164/2018",
+    "tipo": "convocatoria",
+    "docn_esperados": ["000218592"]
   }
 }

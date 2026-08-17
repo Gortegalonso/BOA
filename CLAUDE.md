@@ -37,26 +37,76 @@ Leer antes de escribir código. Confundir estos términos produce un modelo de d
 
 ## 3. Hechos verificados
 
-Verificados el 17 de agosto de 2026.
+Verificados el 17 de agosto de 2026, ampliados el mismo día con un backtest real 2018-2026.
 
 - **Convocatoria 2026 ya publicada**: ORDEN ECU/1145/2026, de 21 de julio, BOA nº 151 de 6
   de agosto de 2026.
 - **Convocatoria 2025**: ORDEN ECD/941/2025, de 24 de julio, BOA nº 148 de 4 de agosto.
-- **Patrón temporal (n=2, débil)**: firma a finales de julio, publicación primeros días de
-  agosto. Ventana crítica: **1 julio – 30 septiembre**.
-- **El prefijo de la orden cambió de `ECD` a `ECU`** entre 2025 y 2026.
+- **CORREGIDO — la "ventana crítica" de la versión 1 era errónea.** Se basaba en n=2 y decía
+  "1 julio – 30 septiembre". El backtest sobre 2011-2026 (16 años, buscador oficial del BOA,
+  ver más abajo) muestra fechas de publicación en **febrero, marzo, mayo, junio, julio,
+  agosto, noviembre y diciembre**, sin ningún patrón mensual estable. La fecha de publicación
+  se ha ido desplazando progresivamente hacia el verano en los últimos años, pero no hay base
+  para excluir ningún mes. **No estrechar nunca la ventana de vigilancia por debajo de todo el
+  año.** El colector ya vigila los 12 meses (ver 7.1), así que el recall no estaba en riesgo;
+  lo único mal calibrado era qué meses reciben el sondeo cada 30 min en vez de cada hora.
+- **Posible hueco en 2020**: no se ha encontrado ninguna orden de convocatoria firmada en el
+  año natural 2020. La ORDEN ECD/1655/2019 (28 de noviembre de 2019) cubre expresamente el
+  año 2020, y la siguiente es la ORDEN ECD/460/2021 (3 de mayo de 2021). Compatible con una
+  disrupción por la pandemia. `[VERIFICAR]`
+- **El prefijo de la orden cambió de `ECD` a `ECU`** entre 2025 y 2026; antes fue `ECD`
+  (2018-2025), y en 2011 era simplemente `ORDEN de <fecha>, de la Consejera de Educación...`
+  sin código de orden. El filtro nunca debe anclarse a un prefijo concreto (ya lo dice la
+  regla 5, y el backtest lo confirma con datos reales).
 - **El BOA está disponible a las 00:15 h** el 99 % de los días, según su carta de servicios.
   Excepción explícita: **boletines extraordinarios**, a cualquier hora y cualquier día.
 - **Publicación de lunes a viernes**, salvo festivos nacionales o autonómicos.
 - **El BOA ofrece RSS diario y suscripción gratuita por correo** al sumario o a cualquier
   sección.
 - **El feed RSS está confirmado y validado.** Descargado para el 6/08/2026: devuelve 26
-  documentos y **contiene la ORDEN ECU/1145/2026** (item 14). Sirve como fuente primaria.
-- **Volumen real: ~26 documentos al día**, unos 6.000 al año. (Una estimación anterior de
-  15.000-20.000 era errónea.)
-- **Prueba del filtro contra ese día real: 4 marcados de 26, 1 verdadero positivo.** La
-  convocatoria dispara dos reglas independientes (R1 y R2), lo que da redundancia frente a
-  cambios de redacción.
+  documentos y **contiene la ORDEN ECU/1145/2026** (item 15, no 14 — recontar tras decodificar
+  bien ISO-8859-1). Sirve como fuente primaria.
+- **`robots.txt` de boa.aragon.es verificado (Fase 0, resuelve el pendiente de la sección 11
+  antigua).** No bloquea `RSSLST`, `VERLST` ni `VERDOC` de forma genérica. Solo contiene
+  ~2000 líneas de bajas puntuales por documento (`MLKOB=...`, retiradas legales caso a caso) y
+  una entrada residual de un `VERDOC` sobre otra base (`BZHT`) sin relación con nuestro uso.
+  El canal RSS (opción 1 de 7.1) queda confirmado como libre de restricción.
+- **El feed SÍ incluye la Sección I (resuelve el otro pendiente de la sección 11 antigua).**
+  Comprobado comparando el RSS del 4/08/2026 contra el sumario HTML oficial de esa fecha: el
+  primer ítem de ambos coincide exactamente (RESOLUCIÓN del Secretario General de la
+  Presidencia, Sección I, csv `BOA20260804001`).
+- **Volumen real: ~26-46 documentos al día** según el boletín (variación observada en el
+  backtest: de 20 a 60 documentos), unos 6.000-9.000 al año.
+- **Descubierto un buscador oficial con salida JSON estructurada.** El BOA (aplicación
+  Angular) usa internamente `CMD=VERLST&BASE=BZHT&SEC=OPENDATABOAJSONELI&OUTPUTMODE=JSON` con
+  parámetros de campo: `TITU` (título, texto libre con AND-de-palabras, no frase exacta),
+  `TEXT-C` (texto completo del documento, más ruidoso), `ORGA-C` (organismo), `RANG-C` (tipo:
+  ORDEN, RESOLUCIÓN, DECRETO...), `PUBL-GE`/`PUBL-LE` (rango de fecha de publicación),
+  `FDIS-C`/`FDIS-GE` (fecha de disposición), `MATE-C` (materia), `SECC-C` (sección). Los
+  acentos se codifican como ISO-8859-1 percent-encoded (`ó` → `%F3`, `í` → `%ED`, etc., no
+  UTF-8). La barra `/` en los valores de los parámetros rompe la consulta (devuelve HTML de
+  error, no JSON) — evitarla o sustituirla por espacios. Cada resultado JSON trae `DOCN`,
+  `FechaPublicacion`, `Fechadisposicion`, `Rango`, `Emisor`, `Titulo` y el `Texto` completo.
+  **Esto fue decisivo para la Fase 3**: permitió construir el conjunto de verdad sin
+  descargar miles de sumarios diarios. No es un canal documentado ni estable frente a
+  cambios de la web (a diferencia del RSS), así que **no usar en producción**, solo para
+  investigación puntual y para reconstruir el backtest si hace falta ampliarlo.
+- **Backtest 2018-2026 completado (Fase 3, ver sección 10): recall 100 %, 12/12 documentos
+  reales capturados.** Conjunto de verdad = 8 órdenes de convocatoria (una por año, salvo el
+  hueco de 2020) + 4 correcciones de errores, localizadas con el buscador anterior y
+  verificadas con una segunda búsqueda con términos distintos (sin solapamiento en los
+  resultados, lo que descarta que falte alguna con redacción distinta). Precisión agregada
+  sobre esos 12 boletines reales: 75 % (16 marcados, 12 positivos); los 4 falsos positivos
+  vienen todos de R3 (auxiliar) y caen en el cubo "ambiguo", nunca en "seguro".
+- **Hallazgo importante — ningún documento derivado de la POT (listas de admitidos,
+  calendario, sedes, tribunales) aparece en el BOA entre 2018 y 2026**, pese a probar varias
+  combinaciones de búsqueda (`admitidas`+`profesional`, `tribunales`+`profesional`,
+  `calendario`+`profesional`+`tecnico`, búsqueda por organismo=educación + tipo=RESOLUCIÓN).
+  Todo lo encontrado con esas palabras son procesos selectivos de personal de la
+  Administración, no de la POT. Esto **resuelve a favor de "solo educa.aragon.es"** el
+  pendiente de la sección 11 sobre qué documentos van al BOA — aunque la ausencia de
+  evidencia no es prueba definitiva, refuerza que el Colector B (7.2) es imprescindible, no
+  opcional. `[VERIFICAR]` mantenido por prudencia, pero con bastante más peso a favor.
 - **Licencia de los datos**: Creative Commons Attribution 4.0. Atribución obligatoria si se
   redistribuye contenido.
 - **Requisito de acceso aplicable a estos alumnos**: matrícula previa en un ciclo formativo
@@ -148,27 +198,41 @@ Frecuencia: cada hora entre las 08:00 y las 20:00. En ventana crítica (1 jul �
 30 minutos. La frecuencia **no** es para detectarlo antes (el BOA sale a las 00:15 y los
 plazos se cuentan en días), sino para cubrir boletines extraordinarios.
 
+**Nota (Fase 3):** el backtest 2011-2026 muestra convocatorias publicadas en meses muy
+distintos (febrero, marzo, mayo, junio, julio, agosto, noviembre, diciembre — ver sección
+3). La franja jul-sep con sondeo cada 30 min sigue siendo razonable porque es donde se ha
+concentrado la publicación en los últimos años, pero **no excluye nada el resto del año**:
+el colector corre cada hora los 12 meses, así que el recall no depende de esta franja. Si se
+quiere revisar, la opción más simple es quitar la distinción y sondear cada hora todo el año
+de forma uniforme, sin ninguna ventana "crítica" diferenciada — la ganancia de los 30 min en
+jul-sep frente a un festivo/boletín extraordinario es marginal y ya no está respaldada por
+los datos con la misma fuerza que antes.
+
 Orden de preferencia del canal, revisado por el riesgo de `robots.txt`:
 
 1. **Suscripción gratuita por correo al sumario, leída por IMAP.** Canal ofrecido por el
    propio BOA. Sin scraping, sin conflicto con `robots.txt`, inmune a cambios de la web.
-2. **RSS del boletín diario. CONFIRMADO Y VALIDADO** — canal principal recomendado:
+   Pendiente de alta manual por el usuario — no depende del código. `[VERIFICAR]` (no
+   automatizable de comprobar; requiere que el usuario confirme que se ha suscrito).
+2. **RSS del boletín diario. CONFIRMADO Y VALIDADO** — canal principal recomendado y el que
+   implementa `boa_monitor/rss.py`:
    ```
    https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI
      ?CMD=RSSLST&DOCS=1-200&BASE=BOLE&SEC=BOARSS&SEPARADOR=&PUBL-C=AAAAMMDD
    ```
-3. **Sumario HTML vía BRSCGI**, como último recurso:
+3. **Sumario HTML vía BRSCGI**, como último recurso. **CONFIRMADO** (usado para verificar la
+   inclusión de la Sección I en el RSS, ver sección 3):
    ```
    https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI
      ?CMD=VERLST&DOCS=1-200&BASE=BOLE&SEC=FIRMA&SEPARADOR=&PUBL=AAAAMMDD
    ```
-   Documento individual: `CMD=VEROBJ&MLKOB=<id>`. `[VERIFICAR]`
+   Documento individual: `CMD=VEROBJ&MLKOB=<id>`. La parte del `MLKOB` no se ha probado
+   todavía. `[VERIFICAR]`
 
-**Aviso sobre `robots.txt`:** hay indicios de que `boa.aragon.es` desaconseja el acceso
-automatizado, probablemente bajo `/cgi-bin/`. No es una prohibición legal (datos CC BY,
-servicio público), pero sí un riesgo de bloqueo por IP, agravado porque los runners de
-GitHub salen por rangos muy conocidos. **Leer el `robots.txt` antes de elegir el canal.** Si
-solo bloquea otras rutas, el RSS vuelve a ser la opción 1. `[VERIFICAR]`
+**`robots.txt` verificado (Fase 0, 17/08/2026): no bloquea nada de lo que usamos.** Solo
+contiene bajas puntuales de documentos concretos por `MLKOB` (retiradas legales caso a caso,
+no una política general) y una entrada residual sobre otra base (`BZHT`) sin relación. El
+canal 2 (RSS) es la opción principal sin reservas.
 
 Requisitos: reintentos con backoff, `User-Agent` identificable con contacto, una petición por
 hora como máximo, caché local de todo lo descargado.
@@ -382,61 +446,87 @@ Detecta cambios en el BOA, que es un fallo distinto del anterior: 9.2 comprueba 
 Si llega el 10 de septiembre sin convocatoria detectada, avisar con el mensaje "no he
 detectado nada, revísalo a mano". La ausencia de señal es señal.
 
+**Nota (Fase 3):** el backtest muestra convocatorias históricas publicadas hasta noviembre y
+diciembre (2018, 2019). Si el patrón revirtiera a esas fechas, esta alerta dispararía en
+falso el 10 de septiembre. Es un coste aceptable (rule 1: falso positivo = revisión de 10
+segundos) y el mecanismo ya falla de forma segura — abre un issue para revisión humana, no
+detiene nada ni oculta el resultado real cuando llegue.
+
 ---
 
 ## 10. Fases de trabajo
 
-| Fase | Contenido | Puerta |
-|---|---|---|
-| 0 | Verificar `robots.txt`, la URL del RSS y dar de alta la suscripción por correo | — |
-| 1 | Colector A + filtro determinista + caché local | — |
-| 2 | **Descarga y caché de los sumarios 2018-2026** | — |
-| 3 | **Backtest sobre esa caché** | **Bloqueante** |
-| 4 | Colector B | — |
-| 5 | Extracción con LLM + validación | — |
-| 6 | Cruce alumno-módulo | — |
-| 7 | Alertas, canario externo y keepalive | — |
+| Fase | Contenido | Puerta | Estado |
+|---|---|---|---|
+| 0 | Verificar `robots.txt`, la URL del RSS y dar de alta la suscripción por correo | — | robots.txt y RSS ✅. Suscripción por correo pendiente del usuario (no automatizable). |
+| 1 | Colector A + filtro determinista + caché local | — | ✅ `boa_monitor/rss.py`, `filtro.py`, `cache.py`, `main.py`, 37 tests |
+| 2 | **Descarga y caché de los sumarios 2018-2026** | — | ✅ reinterpretada, ver nota abajo |
+| 3 | **Backtest sobre esa caché** | **Bloqueante** | ✅ **recall 100% (12/12), precisión 75%** — puerta superada |
+| 4 | Colector B | — | Pendiente |
+| 5 | Extracción con LLM + validación | — | Pendiente |
+| 6 | Cruce alumno-módulo | — | Pendiente |
+| 7 | Alertas, canario externo y keepalive | — | ✅ adelantada junto con la Fase 1 (workflows `contrato.yml`, `alerta_estacional.yml`, `keepalive.yml`) |
 
-### Fase 2: caché histórica
+### Fase 2: caché histórica — reinterpretada con datos reales
 
-Descargar una sola vez los sumarios de 2018 a 2026 y guardarlos en disco. Todo el desarrollo
-y las repeticiones del backtest trabajan contra esa copia local. Motivo doble: no golpear
-repetidamente el servidor del BOA durante el desarrollo, y hacer el backtest reproducible y
-ejecutable sin red. Ritmo de descarga conservador, con pausa entre peticiones.
+El plan original pedía descargar el sumario RSS de cada día entre 2018 y 2026 (~2000
+peticiones). Durante la Fase 3 se descubrió que el propio BOA expone un buscador con salida
+JSON (`SEC=OPENDATABOAJSONELI`, ver sección 3) que permite localizar directamente los
+documentos relevantes por título, órgano y rango de fechas, sin recorrer boletín a boletín.
+Se usó ese buscador para construir el conjunto de verdad y, a partir de las fechas exactas
+que devolvió, se descargó y cacheó el **RSS real** de esos 12 días concretos (no un muestreo
+sintético) en `fixtures/regresion/*.rss` — el mismo fichero sirve a la vez de fixture de
+regresión (9.2) y de materia prima del backtest (9.3). Esto cumple el objetivo de la fase
+(backtest reproducible y offline) sin las ~2000 peticiones al servidor. El buscador JSON no
+es un canal documentado ni estable — no usarlo en producción, solo si hace falta ampliar el
+conjunto de verdad más adelante.
 
-### Fase 3: backtest
+### Fase 3: backtest — completada
 
-Construir el **conjunto de verdad** localizando a mano, por cada año de 2018 a 2026: la
-orden de convocatoria, sus correcciones de errores, ampliaciones de plazo y resoluciones
-asociadas. Objetivo 30-40 documentos, no solo las 8-9 convocatorias principales: un `n`
-mayor es lo que hace significativa la calibración.
+Conjunto de verdad para 2018-2026, localizado con el buscador anterior y verificado con una
+segunda búsqueda con términos distintos: **9 órdenes de convocatoria**, una por cada año
+cubierto entre 2018 y 2026 salvo 2020 (ese ciclo lo cubrió la orden firmada en noviembre de
+2019 — ver el hallazgo del posible hueco de 2020 en la sección 3; 2018 tuvo dos, una para el
+propio 2018 y otra en octubre para el ciclo 2019) + **3 correcciones de errores** (2018, 2022,
+2025) = **12 documentos**, detalle completo en
+`fixtures/regresion/positivos_esperados.json`. Menos que el objetivo
+original de 30-40, pero ese número era una estimación a priori; la búsqueda exhaustiva no
+encontró ninguna ampliación de plazo, lista de admitidos, calendario, sede ni tribunal
+publicados en el BOA en esos 9 años (ver el hallazgo de la sección 3) — el conjunto de verdad
+real es este.
 
-- **Recall** = relevantes capturados / relevantes existentes. **Objetivo: 100 %.** Cualquier
-  fallo obliga a ampliar el filtro y repetir.
-- **Precisión** = relevantes / marcados. **Sin objetivo.** Un 2 % es aceptable.
+- **Recall = 100 % (12/12).** Verificado en `tests/test_backtest.py` y
+  `tests/test_regresion.py`. Puerta de la Fase 3 superada.
+- **Precisión agregada = 75 %** (16 marcados de 439 documentos en los 12 boletines reales, 12
+  positivos). Los 4 falsos positivos disparan solo R3 (auxiliar) y caen en "ambiguo", nunca en
+  "seguro" — verificado explícitamente en `test_los_falsos_positivos_nunca_caen_en_el_cubo_seguro`.
+- **Prueba de robustez**: además de alterar sintéticamente la redacción del título de 2026
+  (`tests/test_filtro.py`), se verificó contra la redacción real de 2018 (15 años más
+  antigua, con vocabulario ligeramente distinto) y disparó igual.
 
-**Prueba de robustez adicional**, porque con `n` pequeño el recall no basta: alterar
-deliberadamente la redacción de los títulos históricos (quitar "directa", cambiar "pruebas"
-por "prueba", cambiar el prefijo de la orden) y comprobar que el filtro sigue disparando. Un
-filtro que acierta 9 de 9 solo con la redacción literal es frágil.
+Ejecutar `python -m boa_monitor.backtest` para ver el informe completo.
 
 ---
 
 ## 11. Pendiente de verificar
 
-- [ ] Confirmar que el feed incluye la sección I: descargar el RSS del 4/08/2026 y comprobar
-      que el documento `BOA20260804001` aparece como primer item. (La completitud general ya
-      está verificada, ver 7.1.1.)
-- [ ] `robots.txt` de `boa.aragon.es`: qué rutas bloquea exactamente.
-- [ ] Estabilidad del patrón `BRSCGI` para el sumario diario.
+Resueltos el 17 de agosto de 2026 (Fases 0 y 3): la inclusión de la Sección I en el feed, qué
+bloquea `robots.txt` (nada de lo que usamos), y con bastante peso a favor (aunque no
+concluyente al 100 %) qué documentos derivados van al BOA — ver sección 3.
+
+- [ ] Estabilidad del patrón `BRSCGI` para el sumario diario a largo plazo (solo se ha
+      verificado en un punto en el tiempo).
 - [ ] Si el feed cubre los boletines extraordinarios.
 - [ ] Si la regla de los 60 días de GitHub Actions aplica a repos privados.
 - [ ] Qué módulos excluye exactamente la ORDEN ECU/1145/2026 (¿FCT y Proyecto?).
 - [ ] Si el anexo lista títulos concretos o cubre todos los ciclos ofertados en Aragón.
 - [ ] **Plazo de inscripción de la convocatoria 2026 — urgente, publicada el 6 de agosto.**
-- [ ] Qué documentos derivados van al BOA y cuáles solo a educa.aragon.es.
+- [ ] Confirmación definitiva (no solo por ausencia en el BOA) de que las listas de
+      admitidos, calendario, sedes y tribunales de la POT se publican solo en
+      educa.aragon.es.
 - [ ] Páginas concretas de educa.aragon.es que debe vigilar el colector B.
 - [ ] Lista definitiva de títulos de hostelería que prepara el centro.
+- [ ] Confirmar con documentación oficial la causa del posible hueco de 2020 (¿pandemia?).
 
 ---
 
