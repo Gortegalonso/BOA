@@ -1,0 +1,30 @@
+[
+  {
+    "url": "https://educa.aragon.es/documents/20126/6840006/Anexo+III+Orden+POT_2026+v3.pdf/71754966-925c-2a80-159c-864c2f658a5a?t=1784544338491",
+    "texto": "Calendario de la convocatoria",
+    "pagina_origen": "pots_calendario",
+    "primera_deteccion_utc": "2026-08-17T18:15:53.429857+00:00",
+    "revisado": false
+  },
+  {
+    "url": "https://educa.aragon.es/documents/20126/6840006/Anexo+I+Orden+POT_2026+v3+Editable.pdf/840df5f7-6b38-f7e0-153b-8a76b5f196df?t=1784544337952",
+    "texto": "Solicitud de inscripción: Anexo I.",
+    "pagina_origen": "pots_calendario",
+    "primera_deteccion_utc": "2026-08-17T18:15:53.429857+00:00",
+    "revisado": false
+  },
+  {
+    "url": "https://educa.aragon.es/documents/20126/6840006/Anexo+II+Orden+POT_2026+v3.pdf/24c0278b-40a6-c60b-bc94-acd5ddcdfec0?t=1784544338251",
+    "texto": "Títulos convocados y centros de realización de las pruebas. Anexo II.",
+    "pagina_origen": "pots_calendario",
+    "primera_deteccion_utc": "2026-08-17T18:15:53.429857+00:00",
+    "revisado": false
+  },
+  {
+    "url": "https://educa.aragon.es/documents/20126/6898806/BRSCGI.pdf/ce1c1cc6-4e9c-850f-9dcb-d8e71b1e99f3?t=1786341049604",
+    "texto": "Convocatoria actual.",
+    "pagina_origen": "pots_calendario",
+    "primera_deteccion_utc": "2026-08-17T18:15:53.429857+00:00",
+    "revisado": false
+  }
+]

@@ -1,7 +1,149 @@
 # CLAUDE.md — Vigilancia de las Pruebas de Obtención de Título (POT) de FP en Aragón
 
-> Versión 2. Documento vivo. Todo lo marcado `[VERIFICAR]` no está confirmado y
-> **no debe darse por bueno sin comprobarlo contra la fuente**.
+> Versión 3, 17 de agosto de 2026. Documento vivo. Todo lo marcado `[VERIFICAR]` no está
+> confirmado y **no debe darse por bueno sin comprobarlo contra la fuente**. Las secciones
+> 1-9 y 12 son la especificación original (por qué del proyecto, reglas, diseño); la sección
+> 0 es el estado real de la implementación y la 10-11 documentan cómo se llegó hasta aquí.
+> Si algo de 0/10/11 contradice a 1-9, **gana lo verificado con datos reales** — la
+> especificación se ha ido corrigiendo sobre la marcha (ver 3 y 7.1).
+
+---
+
+## 0. Estado del proyecto y mapa del repositorio
+
+Léela primero si retomas este proyecto sin contexto previo — resume qué existe, dónde está y
+cómo se ejecuta, sin repetir el detalle de las secciones 1-9 (la especificación) ni 10-11
+(la bitácora de las fases).
+
+### 0.1 Resumen de una frase por fase
+
+| Fase | Qué hace | Estado |
+|---|---|---|
+| 0. Verificación de fuentes | `robots.txt`, URL del RSS, buscador JSON del BOA | ✅ completa (salvo alta de correo, manual) |
+| 1. Colector A + filtro | Vigila el BOA, decide qué es relevante | ✅ completa |
+| 2. Caché histórica | Materia prima offline para el backtest | ✅ completa (reinterpretada, ver 10) |
+| 3. Backtest | Recall 100% sobre 12 documentos reales 2018-2026 | ✅ **puerta superada** |
+| 4. Colector B | Vigila `educa.aragon.es` (listas, calendario, sedes) | ✅ completa |
+| 5. Extracción con LLM | PDF → JSON (plazos, módulos, sedes) | ⏳ no empezada |
+| 6. Cruce alumno-módulo | Qué debe inscribir cada alumno | ⏳ no empezada |
+| 7. Alertas y robustez operativa | Canario, keepalive, pruebas de contrato/regresión/estacional | ✅ completa, adelantada junto con la Fase 1 |
+| — Panel (GitHub Pages / `index.html`) | Visualización local del estado | ⏳ no empezada |
+| — Suscripción por correo al BOA | Canal 1 de 7.1, respaldo del RSS | ⏳ manual, pendiente del usuario |
+
+Detalle de cómo se hizo cada fase, decisiones tomadas y por qué: sección 10. Lo que queda
+sin confirmar: sección 11.
+
+### 0.2 Árbol del repositorio
+
+```
+boa_monitor/                   # Paquete Python del sistema. Sin dependencias externas
+│                               # salvo pytest (solo para tests). Todo en español.
+├── rss.py                     # Colector A: descarga y parsea el RSS del BOA (7.1, 7.1.1)
+├── filtro.py                  # Reglas R1-R4 + cubos seguro/ambiguo/descartado (7.3)
+├── cache.py                   # Caché local del RSS crudo + registro de DOCN ya vistos
+├── main.py                    # Orquesta rss+filtro+cache, escribe estado.json y
+│                               # convocatorias.json. Punto de entrada: `python -m boa_monitor.main`
+├── educa.py                   # Colector B: diff de enlaces PDF en educa.aragon.es (7.2)
+│                               # Punto de entrada: `python -m boa_monitor.educa`
+├── backtest.py                # Ejecuta el filtro contra el conjunto de verdad y da
+│                               # recall/precisión. `python -m boa_monitor.backtest`
+├── contrato.py                # Prueba de contrato (9.3): ¿el RSS del BOA sigue igual?
+│                               # `python -m boa_monitor.contrato`
+└── alerta_estacional.py       # Prueba 9.4: ¿ha pasado el 10 de sept. sin convocatoria?
+                                # `python -m boa_monitor.alerta_estacional`
+
+tests/                         # pytest. 42 tests, todos deterministas y offline
+├── test_rss.py                # Parseo del RSS contra el fixture real de 2026
+├── test_filtro.py             # Reglas del filtro + pruebas de robustez de redacción
+├── test_main.py                # Orquestación end-to-end con red simulada (monkeypatch)
+├── test_educa.py               # Extracción y diff de PDFs de Colector B
+├── test_regresion.py           # Recall sobre los 12 fixtures históricos (9.2)
+├── test_backtest.py            # Puerta de la Fase 3: recall 100% obligatorio (10)
+└── test_alerta_estacional.py   # Casos de la alerta del 10 de septiembre
+
+fixtures/
+├── regresion/                  # RSS real cacheado de los 12 días con positivo conocido
+│   ├── *.rss                   # 2018-02-09 a 2026-08-06, ver positivos_esperados.json
+│   └── positivos_esperados.json  # Conjunto de verdad: fecha → DOCN esperado, tipo, orden
+└── educa/
+    └── pots_calendario_2026-08-17.html  # HTML real de la página de Colector B
+
+data/                           # Estado y resultados. Se versiona (son datos públicos,
+│                                # nunca de alumnos — ver sección 8 y .gitignore).
+├── cache_rss/*.rss             # Caché cruda del RSS, por fecha
+├── vistos.json                 # DOCN ya procesados por Colector A (evita re-alertar)
+├── estado.json                 # Prueba de vida de Colector A (9.1)
+├── convocatorias.json          # Documentos marcados "seguro"/"ambiguo" por Colector A
+├── estado_educa.json           # Última foto de enlaces PDF por página vigilada (Colector B)
+└── documentos_educa.json       # Documentos PDF nuevos detectados por Colector B
+
+.github/workflows/
+├── colector.yml                # Cron de Colector A (horario/30min según sección 7.1)
+├── colector-educa.yml          # Cron de Colector B (10:00, 13:00, 17:00 L-V)
+├── regresion.yml               # Semanal: pytest contra los fixtures (9.2)
+├── contrato.yml                # Semanal: ¿el RSS del BOA sigue igual? Abre issue si falla (9.3)
+├── alerta_estacional.yml       # 10 de septiembre: ¿hay convocatoria? Abre issue si no (9.4)
+└── keepalive.yml               # Semanal: evita que GitHub desactive los crons por inactividad
+
+alumnos/                        # Vacío a propósito. Aquí va el CSV de alumnos del usuario,
+│                                # NUNCA versionado (.gitignore lo excluye). Ver sección 8.
+.gitignore                      # Excluye alumnos/, CSVs, credenciales, entorno virtual
+requirements.txt                # Solo pytest (dev). El runtime no tiene dependencias
+CLAUDE.md                       # Este documento
+```
+
+### 0.3 Cómo arrancar en frío
+
+```powershell
+# Entorno (Windows/PowerShell; el proyecto usa un venv propio en .venv/)
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+# Tests (deterministas, offline, ~0.2 s)
+.\.venv\Scripts\python.exe -m pytest -q
+
+# Backtest completo con informe legible
+.\.venv\Scripts\python.exe -m boa_monitor.backtest
+
+# Ejecutar un colector a mano (escribe en data/, hace peticiones reales)
+.\.venv\Scripts\python.exe -m boa_monitor.main            # Colector A (BOA), fecha de hoy
+.\.venv\Scripts\python.exe -m boa_monitor.main 2026-08-06  # Colector A, fecha concreta
+.\.venv\Scripts\python.exe -m boa_monitor.educa            # Colector B (educa.aragon.es)
+
+# Pruebas de contrato / estacional a mano
+.\.venv\Scripts\python.exe -m boa_monitor.contrato
+.\.venv\Scripts\python.exe -m boa_monitor.alerta_estacional
+```
+
+Convenciones del código: todo en español (identificadores, mensajes, tests), sin comentarios
+que expliquen el qué (los nombres ya lo dicen), stdlib únicamente en tiempo de ejecución
+(`urllib`, `xml.etree`, `json`, `re`) — ver el porqué en sección 6. Cada módulo de
+`boa_monitor/` es ejecutable como script (`python -m boa_monitor.<módulo>`) y tiene su propio
+fichero de test homónimo en `tests/`.
+
+### 0.4 Repositorio remoto
+
+`https://github.com/Gortegalonso/BOA` (público). El repo local usa git normal; no hay
+credenciales guardadas en `.git/config` — el push se hace con un token temporal embebido en
+la URL del remoto solo durante el `push` y se revierte a la URL limpia inmediatamente
+después. `API KEY.txt` (tokens personales del usuario) está en `.gitignore` y nunca se
+versiona.
+
+### 0.5 Qué haría falta para continuar (por orden de dependencia)
+
+1. **Fase 5 (extracción LLM)**: ya hay ejemplos reales de los PDF a extraer, ver 0.2 →
+   `fixtures/educa/` y las URLs en `data/documentos_educa.json`. Falta elegir proveedor
+   (sección 7.4) y escribir el prompt + validación (7.5).
+2. **Fase 6 (cruce alumno-módulo)**: depende de la 5. El esquema del CSV ya está definido
+   (7.6); falta la lista definitiva de títulos de hostelería (pendiente en sección 11).
+3. **Panel local (`index.html`)**: descrito en sección 6 y 9.1 pero no implementado. Depende
+   de tener `convocatorias.json` con datos reales de un año completo para ser útil de probar.
+4. **Alta de la suscripción por correo al BOA** (canal 1 de 7.1): puramente manual, pide al
+   usuario que confirme que la ha hecho.
+5. Antes de dar por buena la Fase 4 en producción, confirmar en la primera convocatoria real
+   que se recojan documentos nuevos en `educa.aragon.es` a lo largo del ciclo (listas de
+   admitidos, etc.) que el diff de Colector B los detecta — de momento solo se ha probado
+   con la foto actual de la página (4 PDFs) y con estados sintéticos en los tests.
 
 ---
 
@@ -283,15 +425,52 @@ probado que el feed la incluya. Prueba residual de dos minutos: descargar el RSS
 `BOA20260804001`, y comprobar que aparece como primer item. Poco relevante para este
 proyecto, porque la POT es una ORDEN de la sección III y el feed las lleva. `[VERIFICAR]`
 
-### 7.2 Colector B — educa.aragon.es
+### 7.2 Colector B — educa.aragon.es — IMPLEMENTADA (Fase 4)
 
-Frecuencia: 10:00, 13:00 y 17:00. Aquí sí actualizan personas en horario de oficina.
+Frecuencia: 10:00, 13:00 y 17:00 Europe/Madrid, L-V. Aquí sí actualizan personas en horario
+de oficina. Implementado en `boa_monitor/educa.py` y `.github/workflows/colector-educa.yml`.
+
+**Página vigilada, localizada navegando desde la home de educa.aragon.es** (`Formación
+Profesional` → enlace "Pruebas de Obtención de Títulos de FP" dentro del bloque de
+calendario de convocatorias):
+
+```
+https://educa.aragon.es/-/formacion-profesional/calendario/pots
+```
+
+El 17/08/2026 esta página tenía exactamente 4 PDF: la orden de convocatoria ("Convocatoria
+actual"), el Anexo I (solicitud de inscripción), el Anexo II (títulos convocados y centros de
+examen) y el Anexo III (calendario de la convocatoria). **Esto confirma la sospecha de la
+Fase 3**: el calendario, las sedes y los títulos convocados no van al BOA — van aquí, como
+anexos de esta misma página. No se ha visto todavía una lista de admitidos/excluidos en esta
+página porque la convocatoria 2026 está a mitad de ciclo (solicitudes abiertas, examen en
+noviembre); si aparece más adelante, el diseño de diff por URL (no por texto) la detectará
+igual sin cambios de código.
 
 Método: extraer el **conjunto de enlaces a PDF** de las páginas vigiladas y compararlo con
-el del día anterior. No hashear la página entera: los elementos volátiles (fechas, banners,
-identificadores de sesión) generan falsas alarmas diarias, y un hash solo dice "algo ha
-cambiado", mientras que la diferencia de conjuntos dice **qué** documento es nuevo y cómo se
-llama.
+el guardado en la ejecución anterior (`data/estado_educa.json`). No hashear la página entera:
+los elementos volátiles (fechas, banners, identificadores de sesión) generan falsas alarmas
+diarias, y un hash solo dice "algo ha cambiado", mientras que la diferencia de conjuntos dice
+**qué** documento es nuevo y cómo se llama. **La clave de comparación es la URL completa del
+PDF, no el texto del enlace**: el gestor documental (Liferay) incrusta un identificador de
+versión en la propia URL, así que si el Departamento sustituye un PDF por una corrección
+manteniendo el mismo texto de enlace ("Convocatoria actual."), la URL cambia y el diff lo
+detecta como documento nuevo igualmente — comprobado en
+`tests/test_educa.py::test_documento_nuevo_se_detecta_por_url_no_por_texto`.
+
+Los documentos nuevos se registran en `data/documentos_educa.json` (mismo espíritu que
+`convocatorias.json` de Colector A, pero sin cubos ni reglas — aquí todo lo nuevo se registra,
+no hay filtro de relevancia porque la página entera ya está acotada al tema).
+
+**Primera ejecución de una página nueva**: no hay "estado anterior" con el que comparar, así
+que todo lo que hay en ese momento cuenta como "nuevo para el sistema" — igual que el primer
+día de Colector A marca como relevante lo que encuentra ese día. No es un error, es la línea
+base.
+
+**Pendiente de verificar en producción** (ver 0.5): el diseño se ha probado con la foto real
+de la página tal como está el 17/08/2026 y con estados sintéticos en los tests, pero no se ha
+observado todavía un ciclo completo (aparición real de una lista de admitidos, por ejemplo)
+para confirmar en vivo que el diff los captura.
 
 ### 7.3 Filtro determinista
 
@@ -462,7 +641,7 @@ detiene nada ni oculta el resultado real cuando llegue.
 | 1 | Colector A + filtro determinista + caché local | — | ✅ `boa_monitor/rss.py`, `filtro.py`, `cache.py`, `main.py`, 37 tests |
 | 2 | **Descarga y caché de los sumarios 2018-2026** | — | ✅ reinterpretada, ver nota abajo |
 | 3 | **Backtest sobre esa caché** | **Bloqueante** | ✅ **recall 100% (12/12), precisión 75%** — puerta superada |
-| 4 | Colector B | — | Pendiente |
+| 4 | Colector B | — | ✅ `boa_monitor/educa.py`, 5 tests, ver 7.2 |
 | 5 | Extracción con LLM + validación | — | Pendiente |
 | 6 | Cruce alumno-módulo | — | Pendiente |
 | 7 | Alertas, canario externo y keepalive | — | ✅ adelantada junto con la Fase 1 (workflows `contrato.yml`, `alerta_estacional.yml`, `keepalive.yml`) |
@@ -506,13 +685,25 @@ real es este.
 
 Ejecutar `python -m boa_monitor.backtest` para ver el informe completo.
 
+### Fase 4: Colector B — completada
+
+Ver el detalle completo en 7.2. Resumen: localizada la página
+`https://educa.aragon.es/-/formacion-profesional/calendario/pots` navegando desde la home
+pública (Formación Profesional → "Pruebas de Obtención de Títulos de FP"), que resultó ser
+exactamente donde vive el calendario, las sedes y los títulos convocados que la Fase 3 no
+encontró en el BOA. Implementado el diff de enlaces PDF por URL (no por texto, para detectar
+sustituciones) en `boa_monitor/educa.py`, con 5 tests contra un fixture HTML real y estados
+sintéticos que simulan un "día anterior". Workflow `colector-educa.yml` a las 10:00, 13:00 y
+17:00 Europe/Madrid, L-V.
+
 ---
 
 ## 11. Pendiente de verificar
 
-Resueltos el 17 de agosto de 2026 (Fases 0 y 3): la inclusión de la Sección I en el feed, qué
-bloquea `robots.txt` (nada de lo que usamos), y con bastante peso a favor (aunque no
-concluyente al 100 %) qué documentos derivados van al BOA — ver sección 3.
+Resueltos el 17 de agosto de 2026 (Fases 0, 3 y 4): la inclusión de la Sección I en el feed,
+qué bloquea `robots.txt` (nada de lo que usamos), qué documentos derivados van al BOA y
+cuáles a educa.aragon.es (con bastante peso a favor, aunque no concluyente al 100 %; ver
+sección 3), y las páginas concretas que debe vigilar el Colector B (sección 7.2).
 
 - [ ] Estabilidad del patrón `BRSCGI` para el sumario diario a largo plazo (solo se ha
       verificado en un punto en el tiempo).
@@ -521,10 +712,13 @@ concluyente al 100 %) qué documentos derivados van al BOA — ver sección 3.
 - [ ] Qué módulos excluye exactamente la ORDEN ECU/1145/2026 (¿FCT y Proyecto?).
 - [ ] Si el anexo lista títulos concretos o cubre todos los ciclos ofertados en Aragón.
 - [ ] **Plazo de inscripción de la convocatoria 2026 — urgente, publicada el 6 de agosto.**
-- [ ] Confirmación definitiva (no solo por ausencia en el BOA) de que las listas de
-      admitidos, calendario, sedes y tribunales de la POT se publican solo en
-      educa.aragon.es.
-- [ ] Páginas concretas de educa.aragon.es que debe vigilar el colector B.
+      El Anexo III de `educa.aragon.es/-/formacion-profesional/calendario/pots` (ver 7.2) lo
+      tiene; falta abrirlo y extraerlo (es exactamente el trabajo de la Fase 5).
+- [ ] Confirmación definitiva de que las listas de admitidos/excluidos y la composición de
+      tribunales de la POT se publican en algún sitio (no aparecían todavía en
+      `educa.aragon.es/-/formacion-profesional/calendario/pots` el 17/08/2026, con la
+      convocatoria a mitad de ciclo — puede que se publiquen más adelante en la misma página,
+      o en otra no localizada aún).
 - [ ] Lista definitiva de títulos de hostelería que prepara el centro.
 - [ ] Confirmar con documentación oficial la causa del posible hueco de 2020 (¿pandemia?).
 

@@ -1,0 +1,45 @@
+name: Colector educa.aragon.es
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # 10:00, 13:00 y 17:00 Europe/Madrid, L-V. Aquí actualizan personas en
+    # horario de oficina (CLAUDE.md 7.2), a diferencia del BOA (00:15).
+    - cron: "0 10 * * 1-5"
+      timezone: Europe/Madrid
+    - cron: "0 13 * * 1-5"
+      timezone: Europe/Madrid
+    - cron: "0 17 * * 1-5"
+      timezone: Europe/Madrid
+
+permissions:
+  contents: write
+
+concurrency:
+  group: colector-educa
+  cancel-in-progress: false
+
+jobs:
+  colecta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ejecutar colector B
+        run: python -m boa_monitor.educa
+
+      - name: Commit de los datos si han cambiado
+        run: |
+          git config user.name "colector-educa[bot]"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/estado_educa.json data/documentos_educa.json
+          if git diff --cached --quiet; then
+            echo "Sin cambios, no se hace commit."
+          else
+            git commit -m "chore: colecta educa.aragon.es $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+          fi
