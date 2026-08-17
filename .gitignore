@@ -1,0 +1,15 @@
+# Datos de alumnos (RGPD) — nunca en el repo, sección 8 de CLAUDE.md
+alumnos/
+*.csv
+!fixtures/**/*.csv
+
+# Entorno Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Editor / OS
+.vscode/
+*.swp
+Thumbs.db

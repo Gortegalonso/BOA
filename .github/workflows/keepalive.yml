@@ -1,0 +1,20 @@
+name: Keepalive
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # Semanal. El colector ya commitea a diario en horario lectivo, pero esto
+    # cubre el escenario en que el colector deje de ejecutarse por otra causa
+    # (CLAUDE.md sección 6, "Trampa crítica de GitHub Actions").
+    - cron: "0 6 * * 1"
+      timezone: Europe/Madrid
+
+permissions:
+  contents: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: efrecon/gh-action-keepalive@v3

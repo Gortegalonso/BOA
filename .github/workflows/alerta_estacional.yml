@@ -1,0 +1,38 @@
+name: Alerta estacional
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # 10 de septiembre, 09:00 Europe/Madrid. Ver CLAUDE.md 9.4.
+    - cron: "0 9 10 9 *"
+      timezone: Europe/Madrid
+
+permissions:
+  issues: write
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Comprobar si se ha detectado la convocatoria de este año
+        id: verificacion
+        run: python -m boa_monitor.alerta_estacional
+
+      - name: Abrir issue si no se ha detectado nada
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `No se ha detectado la convocatoria POT ${new Date().getFullYear()}`,
+              body: "Han pasado el 10 de septiembre sin que el colector marque ninguna convocatoria como 'segura' este año. Revisar a mano en https://www.boa.aragon.es/. La ausencia de señal es señal (CLAUDE.md 9.4).",
+              labels: ["alerta-estacional"],
+            });

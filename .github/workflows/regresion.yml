@@ -1,0 +1,23 @@
+name: Prueba de regresión (filtro)
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # Semanal, lunes 07:00 Europe/Madrid. Offline, contra fixtures del repo.
+    - cron: "0 7 * * 1"
+      timezone: Europe/Madrid
+
+jobs:
+  regresion:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Ejecutar filtro contra los fixtures de positivos conocidos
+        run: python -m pytest tests/test_regresion.py tests/test_filtro.py -v

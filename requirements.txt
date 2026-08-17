@@ -1,0 +1,6 @@
+# El colector en sí (boa_monitor/rss.py, filtro.py, cache.py, main.py) no
+# tiene dependencias: usa solo la librería estándar de Python (urllib,
+# xml.etree, json). Esto es deliberado, ver CLAUDE.md sección 6.
+#
+# pytest es solo para desarrollo y CI (tests/).
+pytest>=8.0
