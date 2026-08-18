@@ -28,7 +28,7 @@ cómo se ejecuta, sin repetir el detalle de las secciones 1-9 (la especificació
 | 6. Cruce alumno-módulo | Qué debe inscribir cada alumno | ✅ completa, verificada extremo a extremo con la convocatoria real |
 | 7. Alertas y robustez operativa | Canario, keepalive, pruebas de contrato/regresión/estacional | ✅ completa, adelantada junto con la Fase 1 |
 | — Panel (GitHub Pages / `index.html`) | Visualización local del estado | ⏳ no empezada |
-| — Suscripción por correo al BOA | Canal 1 de 7.1, respaldo del RSS | ⏳ manual, pendiente del usuario |
+| — Suscripción por correo al BOA | Canal 1 de 7.1, respaldo del RSS | ⏳ dos tareas pendientes, ver 0.5: alta manual (usuario) + lector IMAP (sin construir) |
 
 Detalle de cómo se hizo cada fase, decisiones tomadas y por qué: sección 10. Lo que queda
 sin confirmar: sección 11.
@@ -186,8 +186,20 @@ versiona.
    los imparte el centro del usuario.
 3. **Panel local (`index.html`)**: descrito en sección 6 y 9.1 pero no implementado. Depende
    de tener `convocatorias.json` con datos reales de un año completo para ser útil de probar.
-4. **Alta de la suscripción por correo al BOA** (canal 1 de 7.1): puramente manual, pide al
-   usuario que confirme que la ha hecho.
+4. **Suscripción por correo al BOA (canal 1 de 7.1) — dos tareas separadas, ninguna hecha
+   todavía (anotado 18/08/2026).**
+   1. **Alta de la suscripción, puramente manual**: darse de alta en la suscripción gratuita
+      del BOA al sumario diario. Es un trámite en la web del BOA, no algo que el código
+      pueda hacer — pide al usuario que confirme que la ha hecho antes de construir lo
+      siguiente.
+   2. **Lectura automática por IMAP, sin construir todavía**: hoy el Colector A solo
+      implementa el canal 2 (RSS, `boa_monitor/rss.py`). Leer el correo automáticamente como
+      canal de respaldo requeriría un módulo nuevo (`boa_monitor/correo.py`, mismo patrón que
+      `rss.py`: descarga, caché, tests con fixture real) que se conecte por IMAP, descargue
+      el resumen diario y lo parsee, más las credenciales de esa cuenta de correo como secret
+      de GitHub Actions — nunca en el repo, mismo patrón que `GEMINI_API_KEY`/
+      `MISTRAL_API_KEY`. No es urgente: el RSS ya es el canal validado y en producción (Fase
+      0-1), este sería solo un respaldo adicional.
 5. Antes de dar por buena la Fase 4 en producción, confirmar en la primera convocatoria real
    que se recojan documentos nuevos en `educa.aragon.es` a lo largo del ciclo (listas de
    admitidos, etc.) que el diff de Colector B los detecta — de momento solo se ha probado
@@ -966,6 +978,11 @@ sección 3), y las páginas concretas que debe vigilar el Colector B (sección 7
       del servicio. El fallback a Mistral cubrió el caso, así que el sistema no está en
       riesgo, pero falta ver si es un incidente puntual o si Gemini es poco fiable en
       producción — si se repite, valorar invertir el orden (Mistral primero).
+- [ ] **Canal 1 de 7.1 (correo del BOA) sin construir, anotado el 18/08/2026 para retomar
+      más adelante — ver el detalle completo en 0.5.** Dos tareas independientes: (1) alta de
+      la suscripción gratuita en la web del BOA, manual, pendiente del usuario; (2) módulo
+      `boa_monitor/correo.py` que la lea por IMAP como respaldo del RSS — sin empezar. No
+      bloquea nada: el RSS (canal 2) es el canal validado en producción.
 
 ---
 
