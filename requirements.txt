@@ -1,6 +1,15 @@
-# El colector en sí (boa_monitor/rss.py, filtro.py, cache.py, main.py) no
-# tiene dependencias: usa solo la librería estándar de Python (urllib,
-# xml.etree, json). Esto es deliberado, ver CLAUDE.md sección 6.
+# El colector en sí (boa_monitor/rss.py, filtro.py, cache.py, main.py,
+# educa.py) no tiene dependencias: usa solo la librería estándar de Python
+# (urllib, xml.etree, json). Esto es deliberado, ver CLAUDE.md sección 6.
 #
 # pytest es solo para desarrollo y CI (tests/).
 pytest>=8.0
+
+# Excepciones a "solo stdlib": boa_monitor/extraccion.py (Fase 5) necesita
+# renderizar páginas de PDF a imagen para pasárselas al LLM (7.4) y no hay
+# forma de hacerlo con la librería estándar. Las llamadas a los proveedores
+# LLM sí usan urllib, sin SDK de por medio. boa_monitor/cruce.py (Fase 6)
+# necesita leer el .xlsx de alumnos (7.6); csv sí es stdlib, pero el usuario
+# trabaja en Excel.
+pymupdf>=1.24
+openpyxl>=3.1

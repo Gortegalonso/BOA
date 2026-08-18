@@ -24,8 +24,8 @@ cómo se ejecuta, sin repetir el detalle de las secciones 1-9 (la especificació
 | 2. Caché histórica | Materia prima offline para el backtest | ✅ completa (reinterpretada, ver 10) |
 | 3. Backtest | Recall 100% sobre 12 documentos reales 2018-2026 | ✅ **puerta superada** |
 | 4. Colector B | Vigila `educa.aragon.es` (listas, calendario, sedes) | ✅ completa |
-| 5. Extracción con LLM | PDF → JSON (plazos, módulos, sedes) | ⏳ no empezada |
-| 6. Cruce alumno-módulo | Qué debe inscribir cada alumno | ⏳ no empezada |
+| 5. Extracción con LLM | PDF → JSON (plazos, módulos, sedes) | ✅ completa, verificada contra las APIs reales |
+| 6. Cruce alumno-módulo | Qué debe inscribir cada alumno | ✅ completa, verificada extremo a extremo con la convocatoria real |
 | 7. Alertas y robustez operativa | Canario, keepalive, pruebas de contrato/regresión/estacional | ✅ completa, adelantada junto con la Fase 1 |
 | — Panel (GitHub Pages / `index.html`) | Visualización local del estado | ⏳ no empezada |
 | — Suscripción por correo al BOA | Canal 1 de 7.1, respaldo del RSS | ⏳ manual, pendiente del usuario |
@@ -49,24 +49,41 @@ boa_monitor/                   # Paquete Python del sistema. Sin dependencias ex
 │                               # recall/precisión. `python -m boa_monitor.backtest`
 ├── contrato.py                # Prueba de contrato (9.3): ¿el RSS del BOA sigue igual?
 │                               # `python -m boa_monitor.contrato`
-└── alerta_estacional.py       # Prueba 9.4: ¿ha pasado el 10 de sept. sin convocatoria?
-                                # `python -m boa_monitor.alerta_estacional`
+├── alerta_estacional.py       # Prueba 9.4: ¿ha pasado el 10 de sept. sin convocatoria?
+│                               # `python -m boa_monitor.alerta_estacional`
+├── extraccion.py              # Fase 5: PDF → JSON con LLM (imagen, no texto) + validación
+│                               # determinista (7.4-7.5). Fallback Gemini → Mistral, los dos
+│                               # gratuitos y con API compatible con OpenAI (urllib, sin SDK).
+│                               # `python -m boa_monitor.extraccion <ruta_al_pdf>`
+└── cruce.py                   # Fase 6: cruce alumno-módulo (7.6). Lee el Excel del usuario
+                                # (fuera del repo) y lo compara contra los `modulos_convocados`
+                                # de la Fase 5. `python -m boa_monitor.cruce <alumnos.xlsx> <convocatoria.json>`
 
-tests/                         # pytest. 42 tests, todos deterministas y offline
+tests/                         # pytest. 60 tests, todos deterministas y offline
 ├── test_rss.py                # Parseo del RSS contra el fixture real de 2026
 ├── test_filtro.py             # Reglas del filtro + pruebas de robustez de redacción
 ├── test_main.py                # Orquestación end-to-end con red simulada (monkeypatch)
 ├── test_educa.py               # Extracción y diff de PDFs de Colector B
 ├── test_regresion.py           # Recall sobre los 12 fixtures históricos (9.2)
 ├── test_backtest.py            # Puerta de la Fase 3: recall 100% obligatorio (10)
-└── test_alerta_estacional.py   # Casos de la alerta del 10 de septiembre
+├── test_alerta_estacional.py   # Casos de la alerta del 10 de septiembre
+├── test_extraccion.py          # Render PDF→imagen, validación 7.5, fallback entre proveedores
+│                                # (red simulada con monkeypatch, igual que test_educa.py)
+└── test_cruce.py                # Carga de Excel, filtro por "pendiente", marca convocado/no
+                                  # convocado, contra el fixture de alumnos inventados
 
 fixtures/
 ├── regresion/                  # RSS real cacheado de los 12 días con positivo conocido
 │   ├── *.rss                   # 2018-02-09 a 2026-08-06, ver positivos_esperados.json
 │   └── positivos_esperados.json  # Conjunto de verdad: fecha → DOCN esperado, tipo, orden
-└── educa/
-    └── pots_calendario_2026-08-17.html  # HTML real de la página de Colector B
+├── educa/
+│   ├── pots_calendario_2026-08-17.html      # HTML real de la página de Colector B
+│   └── anexo_iii_calendario_pot_2026.pdf    # PDF real (calendario de la convocatoria 2026),
+│                                             # fixture de test_extraccion.py
+└── cruce/
+    └── alumnos_ejemplo.xlsx    # Alumnos INVENTADOS (nombres y códigos ficticios) para
+                                 # probar y desarrollar la Fase 6 sin datos reales — no es una
+                                 # plantilla oficial ni contiene a nadie real, ver sección 8
 
 data/                           # Estado y resultados. Se versiona (son datos públicos,
 │                                # nunca de alumnos — ver sección 8 y .gitignore).
@@ -88,7 +105,7 @@ data/                           # Estado y resultados. Se versiona (son datos p�
 alumnos/                        # Vacío a propósito. Aquí va el CSV de alumnos del usuario,
 │                                # NUNCA versionado (.gitignore lo excluye). Ver sección 8.
 .gitignore                      # Excluye alumnos/, CSVs, credenciales, entorno virtual
-requirements.txt                # Solo pytest (dev). El runtime no tiene dependencias
+requirements.txt                # pytest (dev) + pymupdf (runtime, solo para extraccion.py)
 CLAUDE.md                       # Este documento
 ```
 
@@ -99,7 +116,7 @@ CLAUDE.md                       # Este documento
 py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 
-# Tests (deterministas, offline, ~0.2 s)
+# Tests (deterministas, offline, ~0.6 s)
 .\.venv\Scripts\python.exe -m pytest -q
 
 # Backtest completo con informe legible
@@ -113,6 +130,12 @@ py -3 -m venv .venv
 # Pruebas de contrato / estacional a mano
 .\.venv\Scripts\python.exe -m boa_monitor.contrato
 .\.venv\Scripts\python.exe -m boa_monitor.alerta_estacional
+
+# Fase 5: extraer un PDF real a JSON (necesita GEMINI_API_KEY y/o
+# MISTRAL_API_KEY en el entorno — ver 7.4 y 0.5)
+$env:GEMINI_API_KEY = "..."
+$env:MISTRAL_API_KEY = "..."
+.\.venv\Scripts\python.exe -m boa_monitor.extraccion "fixtures\educa\anexo_iii_calendario_pot_2026.pdf"
 ```
 
 Convenciones del código: todo en español (identificadores, mensajes, tests), sin comentarios
@@ -131,11 +154,36 @@ versiona.
 
 ### 0.5 Qué haría falta para continuar (por orden de dependencia)
 
-1. **Fase 5 (extracción LLM)**: ya hay ejemplos reales de los PDF a extraer, ver 0.2 →
-   `fixtures/educa/` y las URLs en `data/documentos_educa.json`. Falta elegir proveedor
-   (sección 7.4) y escribir el prompt + validación (7.5).
-2. **Fase 6 (cruce alumno-módulo)**: depende de la 5. El esquema del CSV ya está definido
-   (7.6); falta la lista definitiva de títulos de hostelería (pendiente en sección 11).
+1. **Fase 5 (extracción LLM) — completa y verificada el 18/08/2026 contra las APIs reales.**
+   `boa_monitor/extraccion.py` implementa 7.4 (PDF→imagen con PyMuPDF, prompt con el esquema
+   JSON, llamada por `urllib` sin SDK) y 7.5 (validación determinista; el umbral de 30 días
+   se corrigió a 60 con el dato real de 2026, ver sección 7.5). Fallback en orden: **Gemini**
+   (`gemini-flash-latest`, endpoint compatible con OpenAI, variable `GEMINI_API_KEY`) →
+   **Mistral** (`mistral-large-latest`, incluye visión vía Pixtral en su tier gratuito,
+   variable `MISTRAL_API_KEY`). Se descartó Groq como candidato pese a ser buen fallback en
+   velocidad: sus modelos de visión gratuitos (Llama 4 Maverick y Scout) se retiraron en
+   febrero y junio de 2026, confirmando en vivo el riesgo que ya avisaba 7.4. 9 tests con red
+   simulada (`tests/test_extraccion.py`) + fixture real
+   (`fixtures/educa/anexo_iii_calendario_pot_2026.pdf`).
+   **Ejecutado con claves reales el 18/08/2026** (ver el detalle en la sección 10, bitácora de
+   la Fase 5): Gemini devolvió `503 UNAVAILABLE` ("alta demanda") — error del lado de Google,
+   no de configuración, confirmado inspeccionando el cuerpo de la respuesta — y el fallback a
+   Mistral funcionó correctamente, extrayendo el plazo real (10-17 de septiembre) del Anexo
+   III y marcando como ausentes, sin inventar nada, los campos que ese documento en concreto
+   no trae (código de orden, módulos, etc., regla 7). El sistema completo —render, llamada,
+   fallback, validación— queda verificado de extremo a extremo con un documento real.
+2. **Fase 6 (cruce alumno-módulo) — completa y verificada el 18/08/2026 con la convocatoria
+   real.** `boa_monitor/cruce.py` implementa 7.6: lee un Excel de alumnos (vía `openpyxl` —
+   única forma de leer .xlsx sin librería) y lo cruza contra los `modulos_convocados` que
+   devuelve la Fase 5. **Corregido con datos reales**: la clave del cruce es el título/ciclo
+   (`titulo_codigo_oficial`, p.ej. `HOT201`), no el módulo — el Anexo II solo convoca a nivel
+   de título (ver el detalle completo en 7.6). Se ejecutó de extremo a extremo contra la
+   extracción real del Anexo II (110 títulos) y un Excel de alumnos inventados, con resultado
+   correcto en los seis casos de prueba (pendientes, superados, convalidados, título no
+   convocado, dos módulos del mismo título convocado, aviso de grado incoherente). La lista
+   de títulos de hostelería (antes pendiente `[VERIFICAR]`) queda confirmada con códigos
+   oficiales reales en 7.6, salvo la duda menor sobre si `HOT301`-`HOT303` (turismo) también
+   los imparte el centro del usuario.
 3. **Panel local (`index.html`)**: descrito en sección 6 y 9.1 pero no implementado. Depende
    de tener `convocatorias.json` con datos reales de un año completo para ser útil de probar.
 4. **Alta de la suscripción por correo al BOA** (canal 1 de 7.1): puramente manual, pide al
@@ -254,6 +302,27 @@ Verificados el 17 de agosto de 2026, ampliados el mismo día con un backtest rea
 - **Requisito de acceso aplicable a estos alumnos**: matrícula previa en un ciclo formativo
   en centro sostenido con fondos públicos de Aragón, con al menos cinco módulos superados
   (art. 126.4 del Decreto 91/2024).
+- **Calendario completo de la convocatoria 2026, extraído del Anexo III (18/08/2026,
+  resuelve el pendiente urgente de la sección 11):**
+
+  | Actuación | Fecha prevista |
+  |---|---|
+  | Presentación de solicitudes | Del 10 al 17 de septiembre |
+  | Listados provisionales de admitidos/no admitidos | 5 de octubre |
+  | Plazo de reclamación a los listados provisionales | Del 6 al 9 de octubre |
+  | Listados definitivos de admitidos/no admitidos | 20 de octubre |
+  | Constitución de las Comisiones de evaluación | Antes del 21 de octubre |
+  | Publicación de datos de las pruebas por las Comisiones | Antes del 23 de octubre |
+  | Realización de las pruebas | Del 3 al 13 de noviembre |
+  | Publicación de calificaciones | Hasta el 18 de noviembre |
+  | Periodo de reclamaciones | Hasta el 20 de noviembre |
+  | Sesiones de evaluación | Hasta el 27 de noviembre |
+
+  Fuente: `https://educa.aragon.es/documents/20126/6840006/Anexo+III+Orden+POT_2026+v3.pdf`
+  (URL capturada por el Colector B, ver `data/documentos_educa.json`). **Da además un punto
+  de verificación natural para el pendiente 0.5.5**: los listados de admitidos deberían
+  aparecer en `educa.aragon.es` (no en el BOA, según el hallazgo de la Fase 3) sobre el 5 de
+  octubre — comprobar entonces que el Colector B los captura.
 
 ---
 
@@ -507,15 +576,50 @@ El modelo solo mueve documentos entre "avísame ya" y "míralo el domingo", nunc
 "existe" y "no existe". Decidir si compensa **después** del backtest: con 4 marcados de 26,
 puede que el ruido sea tan bajo que el LLM sobre en esta etapa.
 
-### 7.4 Extracción con LLM
+### 7.4 Extracción con LLM — implementada y verificada contra la API real el 18/08/2026
+
+`boa_monitor/extraccion.py`. Punto de entrada: `python -m boa_monitor.extraccion <ruta.pdf>`.
 
 **Entrada: las páginas del anexo como imágenes, no como texto extraído.** Las tablas del BOA
 en PDF se desordenan al pasarlas a texto plano y el modelo alucinará códigos de módulo.
+`pdf_a_imagenes()` usa PyMuPDF para renderizar cada página a PNG — única dependencia de
+runtime del proyecto fuera de la stdlib (ver sección 6 y `requirements.txt`), porque no hay
+forma de rasterizar un PDF sin una librería dedicada.
 
 Coste: 5-20 llamadas al año. **El tier gratuito es irrelevante como criterio de elección;
 escoger por calidad de extracción.** Si se usa uno gratuito, la capa de acceso debe ser
 compatible con la API de OpenAI y tener un proveedor alternativo configurado: los
 proveedores retiran modelos gratuitos sin previo aviso.
+
+**Proveedores elegidos, con fallback automático en este orden (verificado el 18/08/2026):**
+
+1. **Gemini** (`gemini-flash-latest` — alias que Google mantiene apuntando siempre al Flash
+   vigente, en vez de fijar un número de versión que quedará obsoleto). Endpoint compatible
+   con OpenAI: `https://generativelanguage.googleapis.com/v1beta/openai/`. Clave en
+   `GEMINI_API_KEY`.
+2. **Mistral** (`mistral-large-latest`, incluye capacidad de visión —heredera de Pixtral— en
+   el tier gratuito "Experiment"). Endpoint: `https://api.mistral.ai/v1`. Clave en
+   `MISTRAL_API_KEY`.
+
+Se descartó **Groq** como candidato pese a ser el más rápido: sus modelos de visión
+gratuitos se han ido retirando durante 2026 (Llama 4 Maverick en febrero, Llama 4 Scout en
+junio, sin sustituto de visión equivalente en el tier gratuito a día de hoy) — confirma en
+vivo, siete meses después de escribirse, la advertencia de este mismo párrafo sobre
+proveedores gratuitos. `[VERIFICAR]`: la disponibilidad de modelos cambia constantemente;
+antes de depender de esto en producción, comprobar en la documentación de cada proveedor que
+`gemini-flash-latest` y `mistral-large-latest` siguen existiendo y siguen soportando imagen +
+JSON estricto.
+
+Cada llamada se hace con `urllib` puro (mismo patrón que `rss.py`/`educa.py`), sin SDK de
+ningún proveedor — la API de ambos es compatible con el formato de OpenAI (`chat/completions`
+con `image_url` en base64 y `response_format: json_object`), así que no hace falta.
+
+**Verificado contra las dos APIs reales el 18/08/2026** (ver la bitácora completa en la
+sección 10): con el PDF real del Anexo III, Gemini devolvió `503 UNAVAILABLE` (sobrecarga
+del lado de Google, no un fallo de configuración) y el fallback a Mistral extrajo
+correctamente el plazo de inscripción real, dejando en `null` — sin inventar nada, regla 7 —
+los campos que ese documento no trae. `tests/test_extraccion.py` cubre además el renderizado
+de PDF y la lógica de fallback/validación con red simulada.
 
 Salida JSON estricta, temperatura 0:
 
@@ -544,36 +648,88 @@ Antes de alertar:
 
 - `plazo_fin > plazo_inicio > fecha_publicacion_boa`
 - `plazo_fin - plazo_inicio` entre 5 y 40 días naturales
-- `plazo_inicio - fecha_publicacion_boa` menor de 30 días
+- `plazo_inicio - fecha_publicacion_boa` menor de 60 días — **corregido con datos reales
+  (18/08/2026)**: la versión original decía "menor de 30 días", pero la convocatoria 2026
+  real (BOA 6 de agosto, plazo del 10 al 17 de septiembre, ver sección 3) tiene 35 días de
+  hueco y hubiera disparado la validación como "no fiable" sin motivo. Mismo espíritu que la
+  ventana crítica de 7.1: no estrechar un umbral por debajo de lo que ya se ha observado
+  ocurrir de verdad.
 - todo módulo tiene código **y** denominación
 - `codigo_orden` casa con `[A-Z]{2,4}/\d+/\d{4}`
 
 Si alguna falla: **alertar igualmente**, marcando el registro como no fiable. Nunca silenciar
 por fallo de validación.
 
-### 7.6 Cruce alumno-módulo
+### 7.6 Cruce alumno-módulo — implementada y verificada el 18/08/2026
+
+`boa_monitor/cruce.py`. Punto de entrada:
+`python -m boa_monitor.cruce <alumnos.xlsx> <convocatoria.json>`.
 
 Justificación: 50-100 alumnos × 2-6 módulos pendientes = 150-500 inscripciones al año. El
 objetivo no es ahorrar tiempo, sino evitar errores de transcripción de códigos, que son
 irreversibles: un módulo mal solicitado equivale a un año perdido.
 
-Entrada dinámica por CSV o Excel, **fuera del repositorio**. Esquema mínimo:
+**Corrección importante de diseño, con datos reales (Anexo II real de 2026 + lectura del
+Anexo I): la convocatoria NO cierra módulo a módulo, cierra a nivel de título/ciclo.** El
+Anexo II ("Títulos convocados y centros de realización de las pruebas") solo trae código de
+título (p.ej. `HOT201`) y centro examinador — nunca código de módulo. El propio formulario
+de inscripción (Anexo I) trae la tabla "Código módulo / Módulos profesionales" **en blanco**
+para que cada alumno declare libremente cuáles necesita de su título, y su declaración
+responsable dice literalmente "no estoy matriculado/a... en ninguno de los módulos
+profesionales del mismo Ciclo Formativo". Es decir: si el título está convocado, todos los
+módulos pendientes de ese título son examinables en el centro asignado; no existe una lista
+de módulos convocados por separado. El diseño original de este documento asumía cruce a
+nivel de módulo — corregido tras comprobarlo contra los documentos reales.
+
+Entrada dinámica por Excel (`.xlsx`, vía `openpyxl` — única forma de leerlo sin librería,
+ver sección 6), **fuera del repositorio**. Esquema:
 
 ```csv
-alumno_id,nombre,ciclo,grado,modulo_codigo,modulo_denominacion,estado
-A001,,COCI,medio,0026,Procesos de preelaboración,pendiente
+alumno_id,nombre,ciclo,grado,titulo_codigo_oficial,modulo_codigo,modulo_denominacion,estado
+A001,Ana Pérez,COCI,medio,HOT201,0026,Procesos de preelaboración,pendiente
 ```
 
-`estado`: `pendiente` | `superado` | `convalidado` | `solicitada_convalidacion`.
-`alumno_id` es la clave; `nombre` es opcional y prescindible para el cruce.
+- `estado`: `pendiente` | `superado` | `convalidado` | `solicitada_convalidacion`. Solo
+  `pendiente` entra en la salida del cruce.
+- `ciclo` es el código o nombre **interno** del centro (el que ya use el usuario en su
+  gestión diaria) — el cruce nunca lo usa, es solo para que el usuario identifique al alumno
+  de un vistazo. Decisión del usuario (18/08/2026): mantener las dos columnas en paralelo en
+  vez de sustituir una por otra, aunque la interna quede sin uso en el código.
+- `titulo_codigo_oficial` es el código oficial de Aragón (`HOT201`, `HOT203`... ver Anexo II)
+  — **esta es la clave real del cruce**, no `modulo_codigo`.
+- `modulo_codigo`/`modulo_denominacion` se conservan porque son lo que el alumno declarará
+  en el Anexo I, pero no participan en si está convocado.
 
-Aquí, y solo aquí, se aplica el recorte a la familia de Hostelería y Turismo. Títulos de
-interés, a confirmar con el usuario: Técnico en Cocina y Gastronomía, Técnico en Servicios
-en Restauración, Técnico Superior en Dirección de Cocina, Técnico Superior en Dirección de
-Servicios de Restauración. `[VERIFICAR]`
+Aquí, y solo aquí, se aplica el recorte a la familia de Hostelería y Turismo — de forma
+implícita: el Excel del usuario ya viene acotado a sus propios alumnos, así que basta con
+cruzar cada `titulo_codigo_oficial` contra la convocatoria completa. **Títulos de hostelería
+confirmados con el Anexo II real de 2026** (resuelve el pendiente `[VERIFICAR]` de la
+versión anterior de este documento):
 
-Salida por alumno: módulos pendientes, cuáles están convocados este año, cuáles no, código
-exacto a consignar, centro examinador y fecha límite.
+| Código | Título | Grado | Centro examinador 2026 |
+|---|---|---|---|
+| `HOT201` | Técnico/a en Cocina y Gastronomía | Medio | CPIFP San Lorenzo |
+| `HOT203` | Técnico/a en Servicios de Restauración | Medio | CPIFP San Lorenzo |
+| `HOT304` | Técnico/a Superior en Dirección de Servicios de Restauración | Superior | CPIFP Escuela de Hostelería y Turismo de Teruel |
+| `HOT305` | Técnico/a Superior en Dirección de Cocina | Superior | CPIFP Escuela de Hostelería y Turismo de Teruel |
+
+También existen `HOT301`-`HOT303` (Agencias de Viajes, Alojamientos Turísticos, Guía
+Turística) en el mismo bloque `HOT`, pero son de la rama de turismo, no de restauración —
+`[VERIFICAR]` si el centro del usuario los imparte también.
+
+Salida por alumno (`ResultadoCruce`): módulo pendiente, si el título está convocado este
+año, código exacto a consignar, centro examinador, fecha límite (el `plazo_inscripcion_fin`
+de la Fase 5) y una `advertencia` si el grado declarado por el alumno no casa con el de la
+convocatoria para ese código — no bloquea el resultado (regla 1: maximizar recall), pero
+marca el registro para revisión humana, mismo espíritu que 7.5.
+
+**Verificado de extremo a extremo el 18/08/2026** con un Excel de alumnos inventados
+(`fixtures/cruce/alumnos_ejemplo.xlsx` — nombres y situaciones ficticias, no son datos
+reales) contra la extracción real del Anexo II: separó correctamente los módulos pendientes
+de los superados/convalidados, marcó como convocados dos módulos distintos de un mismo
+título ya convocado (confirma que la clave es el título, no el módulo), detectó un código de
+título inventado que no existe en la convocatoria real, y disparó el aviso de grado
+incoherente para un caso fabricado a propósito. 6 tests, todos deterministas y offline.
 
 ---
 
@@ -642,8 +798,8 @@ detiene nada ni oculta el resultado real cuando llegue.
 | 2 | **Descarga y caché de los sumarios 2018-2026** | — | ✅ reinterpretada, ver nota abajo |
 | 3 | **Backtest sobre esa caché** | **Bloqueante** | ✅ **recall 100% (12/12), precisión 75%** — puerta superada |
 | 4 | Colector B | — | ✅ `boa_monitor/educa.py`, 5 tests, ver 7.2 |
-| 5 | Extracción con LLM + validación | — | Pendiente |
-| 6 | Cruce alumno-módulo | — | Pendiente |
+| 5 | Extracción con LLM + validación | — | ✅ completa y verificada contra las APIs reales (18/08/2026) |
+| 6 | Cruce alumno-módulo | — | ✅ completa y verificada contra la convocatoria real (18/08/2026) |
 | 7 | Alertas, canario externo y keepalive | — | ✅ adelantada junto con la Fase 1 (workflows `contrato.yml`, `alerta_estacional.yml`, `keepalive.yml`) |
 
 ### Fase 2: caché histórica — reinterpretada con datos reales
@@ -696,6 +852,84 @@ sustituciones) en `boa_monitor/educa.py`, con 5 tests contra un fixture HTML rea
 sintéticos que simulan un "día anterior". Workflow `colector-educa.yml` a las 10:00, 13:00 y
 17:00 Europe/Madrid, L-V.
 
+### Fase 5: extracción con LLM — completada y verificada
+
+Ver el detalle completo en 7.4-7.5. Resumen: usando uno de los cuatro PDF que ya había
+capturado el Colector B (`documentos_educa.json`), se descargó el Anexo III (calendario de
+la convocatoria 2026) y se leyó a mano para resolver el pendiente urgente de la sección 11 —
+**plazo de inscripción: del 10 al 17 de septiembre de 2026**, calendario completo hasta el 27
+de noviembre, ver sección 3. Ese mismo PDF real se guardó como fixture
+(`fixtures/educa/anexo_iii_calendario_pot_2026.pdf`) y sirvió para construir y probar
+`boa_monitor/extraccion.py`: renderizado de PDF a imagen con PyMuPDF, prompt con el esquema
+JSON de 7.4, llamada por `urllib` a un proveedor compatible con OpenAI, y fallback automático
+a un segundo proveedor si el primero falla. Elegidos Gemini y Mistral (los dos con tier
+gratuito y soporte de imagen); se investigó y descartó Groq porque sus modelos de visión
+gratuitos llevan retirándose durante todo 2026. La validación determinista de 7.5 se probó
+contra los datos reales de 2026 y **reveló que el umbral original de 30 días entre
+publicación e inicio del plazo era demasiado estricto** (el caso real tiene 35): corregido a
+60 con el mismo criterio que ya se aplicó a la ventana crítica de 7.1 — no estrechar por
+debajo de lo observado. 9 tests nuevos, todos deterministas y offline (red simulada con
+monkeypatch, igual que `test_educa.py`).
+
+**Verificación contra las APIs reales, el mismo 18/08/2026**: con las claves dadas de alta
+por el usuario (`GEMINI_API_KEY`, `MISTRAL_API_KEY`) se ejecutó
+`python -m boa_monitor.extraccion` contra el propio Anexo III real. Gemini respondió
+`503 UNAVAILABLE` ("This model is currently experiencing high demand"): confirmado
+inspeccionando el cuerpo de la respuesta que es sobrecarga temporal del servicio, no un
+problema de clave, endpoint o nombre de modelo. El fallback a Mistral se disparó como estaba
+diseñado y devolvió una extracción correcta: `plazo_inscripcion_inicio`/`fin` exactos
+(2026-09-10/17), `modulos_convocados` vacío (correcto, el Anexo III no lista módulos) y los
+ocho campos que este documento no trae listados en `campos_no_encontrados` en vez de
+inventados. De paso se corrigió un aviso de deprecación de PyMuPDF (`import fitz` →
+`import pymupdf`) que salió en la primera ejecución. La Fase 5 queda verificada de extremo a
+extremo con un documento y unas claves reales, no solo con red simulada.
+
+**Extracción de los 3 PDF restantes y bug de codificación, mismo día**: se extrajeron
+también el Anexo I (formulario de inscripción, sin datos estructurados de interés — es un
+formulario en blanco) y el Anexo II (**110 títulos convocados** con código oficial,
+denominación, ciclo, grado y centro examinador, más el listado de sedes por localidad — la
+extracción más grande probada hasta ahora, 7 páginas). Con 7 páginas a resolución
+`zoom=2.0` el payload ronda los 2,3 MB en base64: el timeout original de 120 s se quedaba
+corto y Mistral lo agotó en el primer intento. Se subió el timeout a 240 s y se añadió
+reintento con backoff distinguiendo errores permanentes (4xx, p.ej. clave inválida — no se
+reintentan) de temporales (5xx, como el 503 de Gemini — sí se reintentan), mismo patrón que
+`rss.py`/`educa.py`. **Bug real encontrado y corregido**: en Windows, `print()` en el bloque
+`__main__` usaba la codificación de la consola (cp1252) en vez de UTF-8 tanto en pantalla
+como redirigido a fichero, corrompiendo los acentos del JSON de salida
+(`Técnico` → `T\xe9cnico`). Corregido con `sys.stdout.reconfigure(encoding="utf-8")` al
+principio del bloque `__main__`, y verificado con una segunda ejecución que los bytes del
+fichero de salida son UTF-8 válido.
+
+### Fase 6: cruce alumno-módulo — completada y verificada, con una corrección de diseño
+
+Ver el detalle completo en 7.6. El usuario pidió crear un Excel de alumnos inventados para
+poder probar y desarrollar la Fase 6 sin esperar a tener datos reales de alumnos (que nunca
+saldrían del repositorio de todos modos, sección 8). Al construir el cruce contra los 110
+títulos reales que acababa de devolver la extracción del Anexo II, se detectó que el diseño
+original de este documento (comparar por `modulo_codigo`) no podía funcionar nunca: el Anexo
+II solo trae códigos de título, no de módulo. Se leyó el Anexo I (formulario de inscripción)
+para confirmar por qué — trae la tabla de módulos profesionales en blanco, de libre
+declaración por el alumno, con una declaración responsable de que no está matriculado en
+esos módulos "del mismo Ciclo Formativo" — y se confirmó: **la convocatoria cierra a nivel
+de título, no de módulo**.
+
+Consultado el usuario sobre cómo identificar el título de cada alumno en su Excel sin
+comprometer el dato interno que ya usa el centro, decidió (18/08/2026): mantener la columna
+`ciclo` interna tal cual (sin uso en el código, solo para que el usuario reconozca al alumno
+de un vistazo) y añadir `titulo_codigo_oficial` como la clave real del cruce. `cruce.py` se
+reescribió con esta clave y con un aviso (no bloqueante, regla 1) cuando el grado declarado
+por el alumno no casa con el de la convocatoria para ese código — un error de transcripción
+real que interesa detectar. Se regeneró el fixture de alumnos inventados
+(`fixtures/cruce/alumnos_ejemplo.xlsx`) usando cuatro códigos de título reales de hostelería
+(`HOT201`, `HOT203`, `HOT305`, y un `HOT999` inventado a propósito para probar el caso "no
+convocado") y se verificó de extremo a extremo contra la extracción real del Anexo II: separó
+bien pendientes de superados/convalidados, marcó como convocados dos módulos distintos de un
+mismo título (confirmando que la clave es el título), detectó el título inexistente, y
+disparó el aviso de grado incoherente en el caso fabricado para probarlo. 6 tests, todos
+deterministas y offline. Este mismo trabajo resolvió de paso el pendiente `[VERIFICAR]` sobre
+la lista definitiva de títulos de hostelería (sección 11): ahora hay códigos oficiales reales
+confirmados.
+
 ---
 
 ## 11. Pendiente de verificar
@@ -710,17 +944,28 @@ sección 3), y las páginas concretas que debe vigilar el Colector B (sección 7
 - [ ] Si el feed cubre los boletines extraordinarios.
 - [ ] Si la regla de los 60 días de GitHub Actions aplica a repos privados.
 - [ ] Qué módulos excluye exactamente la ORDEN ECU/1145/2026 (¿FCT y Proyecto?).
-- [ ] Si el anexo lista títulos concretos o cubre todos los ciclos ofertados en Aragón.
-- [ ] **Plazo de inscripción de la convocatoria 2026 — urgente, publicada el 6 de agosto.**
-      El Anexo III de `educa.aragon.es/-/formacion-profesional/calendario/pots` (ver 7.2) lo
-      tiene; falta abrirlo y extraerlo (es exactamente el trabajo de la Fase 5).
+- [x] ~~Si el anexo lista títulos concretos o cubre todos los ciclos ofertados en Aragón.~~
+      **Resuelto el 18/08/2026**: el Anexo II lista 110 títulos con código, denominación,
+      ciclo, grado y centro — parece cubrir todos los ciclos de FP ofertados en Aragón para
+      esta convocatoria, no un subconjunto (ver sección 10, bitácora de la Fase 5).
 - [ ] Confirmación definitiva de que las listas de admitidos/excluidos y la composición de
       tribunales de la POT se publican en algún sitio (no aparecían todavía en
       `educa.aragon.es/-/formacion-profesional/calendario/pots` el 17/08/2026, con la
       convocatoria a mitad de ciclo — puede que se publiquen más adelante en la misma página,
       o en otra no localizada aún).
-- [ ] Lista definitiva de títulos de hostelería que prepara el centro.
+- [x] ~~Lista definitiva de títulos de hostelería que prepara el centro.~~ **Resuelto el
+      18/08/2026** con códigos oficiales reales del Anexo II: `HOT201`, `HOT203`, `HOT304`,
+      `HOT305` (ver la tabla completa en 7.6). Queda una duda menor: `HOT301`-`HOT303`
+      (Agencias de Viajes, Alojamientos Turísticos, Guía Turística) son del mismo bloque
+      `HOT` pero de la rama de turismo — confirmar con el usuario si su centro también los
+      imparte o si son ruido.
 - [ ] Confirmar con documentación oficial la causa del posible hueco de 2020 (¿pandemia?).
+- [ ] **Fiabilidad de Gemini como proveedor primario de la Fase 5.** Resuelto en parte el
+      18/08/2026 (ver sección 10): la clave y el modelo `gemini-flash-latest` son correctos,
+      pero la única llamada real hecha hasta ahora recibió `503 UNAVAILABLE` por sobrecarga
+      del servicio. El fallback a Mistral cubrió el caso, así que el sistema no está en
+      riesgo, pero falta ver si es un incidente puntual o si Gemini es poco fiable en
+      producción — si se repite, valorar invertir el orden (Mistral primero).
 
 ---
 
