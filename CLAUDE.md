@@ -27,7 +27,7 @@ cómo se ejecuta, sin repetir el detalle de las secciones 1-9 (la especificació
 | 5. Extracción con LLM | PDF → JSON (plazos, módulos, sedes) | ✅ completa, verificada contra las APIs reales |
 | 6. Cruce alumno-módulo | Qué debe inscribir cada alumno | ✅ completa, verificada extremo a extremo con la convocatoria real |
 | 7. Alertas y robustez operativa | Canario, keepalive, pruebas de contrato/regresión/estacional | ✅ completa, adelantada junto con la Fase 1 |
-| — Panel (GitHub Pages / `index.html`) | Visualización local del estado | ⏳ no empezada |
+| — Panel (GitHub Pages / `index.html`) | Visualización local del estado | ✅ completa (18/08/2026) |
 | — Suscripción por correo al BOA | Canal 1 de 7.1, respaldo del RSS | ⏳ dos tareas pendientes, ver 0.5: alta manual (usuario) + lector IMAP (sin construir) |
 
 Detalle de cómo se hizo cada fase, decisiones tomadas y por qué: sección 10. Lo que queda
@@ -104,6 +104,9 @@ data/                           # Estado y resultados. Se versiona (son datos p�
 
 alumnos/                        # Vacío a propósito. Aquí va el CSV de alumnos del usuario,
 │                                # NUNCA versionado (.gitignore lo excluye). Ver sección 8.
+index.html                      # Panel local (sección 6, 9.1): fetch() de los cuatro
+│                                # data/*.json de arriba. Servir con `python -m http.server`
+│                                # (abrir por file:// falla por CORS). Sin datos de alumnos.
 .gitignore                      # Excluye alumnos/, CSVs, credenciales, entorno virtual
 requirements.txt                # pytest (dev) + pymupdf (runtime, solo para extraccion.py)
 CLAUDE.md                       # Este documento
@@ -184,8 +187,16 @@ versiona.
    de títulos de hostelería (antes pendiente `[VERIFICAR]`) queda confirmada con códigos
    oficiales reales en 7.6, salvo la duda menor sobre si `HOT301`-`HOT303` (turismo) también
    los imparte el centro del usuario.
-3. **Panel local (`index.html`)**: descrito en sección 6 y 9.1 pero no implementado. Depende
-   de tener `convocatorias.json` con datos reales de un año completo para ser útil de probar.
+3. **Panel local (`index.html`) — completado el 18/08/2026.** Ver el detalle en sección 10.
+   Antes de construirlo se ejecutó `python -m boa_monitor.main 2026-08-06` para poblar
+   `data/convocatorias.json` con el positivo real (la propia ORDEN ECU/1145/2026) en vez de
+   diseñar contra un fichero vacío. Esa ejecución destapó una errata menor en `main.py` (el
+   print de consola cortaba el título a 100 caracteres a media palabra) — corregida quitando
+   el límite. El panel se probó sirviéndolo con `python -m http.server` y comprobando que los
+   cuatro ficheros de `data/` se sirven y encajan con lo que espera el JavaScript, pero no se
+   ha verificado visualmente en un navegador real (sin herramienta de automatización de
+   navegador en el entorno donde se construyó) — pendiente de que el usuario lo confirme a
+   simple vista.
 4. **Suscripción por correo al BOA (canal 1 de 7.1) — dos tareas separadas, ninguna hecha
    todavía (anotado 18/08/2026).**
    1. **Alta de la suscripción, puramente manual**: darse de alta en la suscripción gratuita
@@ -775,6 +786,13 @@ resuelve con un observador fuera del workflow, y la arquitectura híbrida ya lo 
 un aviso en rojo si tiene más de tres días.** Complementar con recordatorios de calendario
 para el 25 de julio y el 10 de septiembre.
 
+**Implementado el 18/08/2026 con una variante respecto a lo anterior**: una página estática
+servida por `fetch()` no tiene forma de leer la fecha del `git pull` en sí (no es un dato de
+git accesible desde el navegador). En su lugar, `index.html` lee `ultima_ejecucion_utc` de
+`estado.json` y `ultima_comprobacion_utc` de `estado_educa.json` — ficheros versionados que sí
+llegan con el propio `git pull`, así que cumplen el mismo objetivo (detectar silencio) con un
+dato realmente accesible. Ver sección 10.
+
 ### 9.2 Prueba de regresión — ¿mi código sigue acertando?
 
 Guardar en el repo los ficheros RSS de una decena de días con positivo conocido, como
@@ -813,6 +831,7 @@ detiene nada ni oculta el resultado real cuando llegue.
 | 5 | Extracción con LLM + validación | — | ✅ completa y verificada contra las APIs reales (18/08/2026) |
 | 6 | Cruce alumno-módulo | — | ✅ completa y verificada contra la convocatoria real (18/08/2026) |
 | 7 | Alertas, canario externo y keepalive | — | ✅ adelantada junto con la Fase 1 (workflows `contrato.yml`, `alerta_estacional.yml`, `keepalive.yml`) |
+| — | Panel local (`index.html`) | — | ✅ completa (18/08/2026), ver más abajo |
 
 ### Fase 2: caché histórica — reinterpretada con datos reales
 
@@ -942,6 +961,35 @@ deterministas y offline. Este mismo trabajo resolvió de paso el pendiente `[VER
 la lista definitiva de títulos de hostelería (sección 11): ahora hay códigos oficiales reales
 confirmados.
 
+### Panel local (`index.html`) — completado el 18/08/2026
+
+Pendiente 0.5.3, descrito en sección 6 ("Reparto híbrido GitHub / local") y 9.1 (prueba de
+vida). Antes de construirlo se detectó que `data/convocatorias.json` no existía todavía: el
+Colector A solo se había ejecutado con fecha "hoy" (17-18 de agosto), y la convocatoria real
+(ORDEN ECU/1145/2026) se publicó el 6 de agosto — nunca había caído en una ejecución real que
+la marcase como "segura". Para no diseñar el panel contra un fichero vacío se ejecutó
+`python -m boa_monitor.main 2026-08-06` a mano, lo que pobló `convocatorias.json` con el
+positivo real. Esa misma ejecución sacó a la luz una errata menor en el `print` de consola de
+`main.py` (línea `__main__`): truncaba el título a 100 caracteres con `item.titulo[:100]`,
+cortándolo a media palabra ("...obtenc"). Sin ninguna razón real para el límite (el print
+corre ~1 vez al año), se quitó el truncado.
+
+`index.html`, en la raíz del repo, lee por `fetch()` los cuatro ficheros de `data/`
+(`estado.json`, `convocatorias.json`, `estado_educa.json`, `documentos_educa.json`) y muestra:
+pastilla verde/roja de vida por colector (umbral de 3 días, sección 9.1 — ver la nota de esa
+sección sobre por qué usa la marca de tiempo de `estado.json` en vez de la fecha del
+`git pull`), la lista de documentos marcados por Colector A con cubo/reglas/enlace al BOA, y
+la lista de documentos detectados por Colector B con enlace al PDF. Ningún dato de alumnos
+(regla 8). Si se abre por `file://` en vez de servirse por HTTP muestra un aviso explicando
+que hace falta `python -m http.server` (CORS, ver sección 6).
+
+**Verificación parcial**: servido con `python -m http.server` contra los datos reales
+generados arriba, se comprobó por `curl` que los cinco recursos (`index.html` y los cuatro
+JSON) devuelven 200 y que la forma de cada JSON encaja con lo que espera el JavaScript. No se
+ha verificado visualmente en un navegador real — no había herramienta de automatización de
+navegador disponible en el entorno donde se construyó. Pendiente de que el usuario lo abra una
+vez y confirme que se ve bien.
+
 ---
 
 ## 11. Pendiente de verificar
@@ -983,6 +1031,10 @@ sección 3), y las páginas concretas que debe vigilar el Colector B (sección 7
       la suscripción gratuita en la web del BOA, manual, pendiente del usuario; (2) módulo
       `boa_monitor/correo.py` que la lea por IMAP como respaldo del RSS — sin empezar. No
       bloquea nada: el RSS (canal 2) es el canal validado en producción.
+- [ ] **Verificación visual del panel (`index.html`) en un navegador real**, anotado el
+      18/08/2026. Construido y probado por `curl` contra los datos reales (ver sección 10),
+      pero sin comprobación visual — falta que el usuario lo abra con
+      `python -m http.server` y confirme que se ve correctamente.
 
 ---
 

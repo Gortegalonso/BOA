@@ -130,4 +130,4 @@ if __name__ == "__main__":
         f"{resultado['documentos_nuevos']} nuevos, {len(resultado['marcados'])} marcados"
     )
     for item, filtro in resultado["marcados"]:
-        print(f"  [{filtro.cubo.value}] {','.join(filtro.reglas_disparadas)} — {item.titulo[:100]}")
+        print(f"  [{filtro.cubo.value}] {','.join(filtro.reglas_disparadas)} — {item.titulo}")

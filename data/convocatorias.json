@@ -1,0 +1,15 @@
+[
+  {
+    "docn": "007960414",
+    "titulo": "BOA 6/08/26 - ORDEN ECU/1145/2026, de 21 de julio, por la que se convocan las pruebas para la obtención directa de los títulos de Técnico y Técnico Superior de Formación Profesional en la Comunidad Autónoma de Aragón, correspondientes al año 2026.",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007960414",
+    "fecha_boa": "2026-08-06",
+    "reglas_disparadas": [
+      "R1",
+      "R2"
+    ],
+    "cubo": "seguro",
+    "primera_deteccion_utc": "2026-08-18T18:50:14.261150+00:00",
+    "revisado": false
+  }
+]

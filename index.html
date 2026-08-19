@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vigilancia POT FP Aragón</title>
+<style>
+  :root {
+    --fondo: #f5f5f2;
+    --panel: #ffffff;
+    --texto: #1a1a1a;
+    --texto-tenue: #62615c;
+    --borde: #e2e0d8;
+    --acento: #8a4b2e;
+    --ok: #2f6b3e;
+    --ok-fondo: #e7f3e9;
+    --aviso: #9a6b00;
+    --aviso-fondo: #fbf1d9;
+    --error: #a3312a;
+    --error-fondo: #fbe8e6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #171613;
+      --panel: #211f1c;
+      --texto: #ece9e2;
+      --texto-tenue: #a6a396;
+      --borde: #3a3733;
+      --acento: #d99568;
+      --ok: #7fce93;
+      --ok-fondo: #1c2e20;
+      --aviso: #e0b04d;
+      --aviso-fondo: #332b12;
+      --error: #e18b83;
+      --error-fondo: #3a1e1c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2rem 1.25rem 4rem;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  main { max-width: 860px; margin: 0 auto; }
+  h1 {
+    font-size: 1.5rem;
+    margin: 0 0 0.25rem;
+  }
+  .subtitulo {
+    color: var(--texto-tenue);
+    font-size: 0.9rem;
+    margin: 0 0 2rem;
+  }
+  h2 {
+    font-size: 1.05rem;
+    margin: 2.5rem 0 0.75rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  h2 .contador {
+    font-weight: 400;
+    color: var(--texto-tenue);
+    font-size: 0.85rem;
+  }
+  .tarjeta {
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+  }
+  .fila-estado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 0;
+  }
+  .fila-estado + .fila-estado { border-top: 1px solid var(--borde); }
+  .fila-estado .nombre { font-weight: 600; }
+  .fila-estado .detalle { color: var(--texto-tenue); font-size: 0.85rem; }
+  .pastilla {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .pastilla.ok { background: var(--ok-fondo); color: var(--ok); }
+  .pastilla.aviso { background: var(--aviso-fondo); color: var(--aviso); }
+  .pastilla.error { background: var(--error-fondo); color: var(--error); }
+  .pastilla.seguro { background: var(--error-fondo); color: var(--error); }
+  .pastilla.ambiguo { background: var(--aviso-fondo); color: var(--aviso); }
+  .documento {
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 0.7rem;
+  }
+  .documento .cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.4rem;
+  }
+  .documento .titulo {
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+  .documento .meta {
+    color: var(--texto-tenue);
+    font-size: 0.8rem;
+    margin-top: 0.35rem;
+  }
+  .documento a { color: var(--acento); text-decoration: none; }
+  .documento a:hover { text-decoration: underline; }
+  .vacio {
+    color: var(--texto-tenue);
+    font-size: 0.9rem;
+    font-style: italic;
+    padding: 0.5rem 0.1rem;
+  }
+  .error-carga {
+    background: var(--error-fondo);
+    color: var(--error);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    font-size: 0.9rem;
+  }
+  .error-carga code {
+    background: rgba(0,0,0,0.08);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+  footer {
+    margin-top: 3rem;
+    color: var(--texto-tenue);
+    font-size: 0.78rem;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Vigilancia POT FP Aragón</h1>
+  <p class="subtitulo">Estado local de los colectores del BOA y de educa.aragon.es. Ningún dato de alumnos aparece aquí.</p>
+
+  <div id="error-global" style="display:none" class="error-carga"></div>
+
+  <div id="contenido" style="display:none">
+    <h2>Estado de los colectores</h2>
+    <div class="tarjeta" id="tarjeta-estado"></div>
+
+    <h2>Convocatoria BOA <span class="contador" id="contador-convocatorias"></span></h2>
+    <div id="lista-convocatorias"></div>
+
+    <h2>Documentos en educa.aragon.es <span class="contador" id="contador-educa"></span></h2>
+    <div id="lista-educa"></div>
+  </div>
+
+  <footer>Generado localmente a partir de data/estado.json, data/convocatorias.json, data/estado_educa.json y data/documentos_educa.json.</footer>
+</main>
+
+<script>
+const DIAS_AVISO = 3;
+
+function formatoFecha(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleString("es-ES", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function diasDesde(iso) {
+  if (!iso) return Infinity;
+  return (Date.now() - new Date(iso).getTime()) / 86400000;
+}
+
+async function cargarJSON(ruta) {
+  const resp = await fetch(ruta, { cache: "no-store" });
+  if (!resp.ok) throw new Error(`${ruta}: HTTP ${resp.status}`);
+  return resp.json();
+}
+
+function pintarEstadoColector(nombre, ultimaEjecucion, detalle) {
+  const dias = diasDesde(ultimaEjecucion);
+  const clase = dias > DIAS_AVISO ? "error" : "ok";
+  const texto = dias > DIAS_AVISO ? "sin novedades hace demasiado" : "al día";
+  return `
+    <div class="fila-estado">
+      <div>
+        <div class="nombre">${nombre}</div>
+        <div class="detalle">${detalle} · última comprobación: ${formatoFecha(ultimaEjecucion)}</div>
+      </div>
+      <span class="pastilla ${clase}">${texto}</span>
+    </div>`;
+}
+
+function pintarConvocatoria(registro) {
+  return `
+    <div class="documento">
+      <div class="cabecera">
+        <div class="titulo">${registro.titulo}</div>
+        <span class="pastilla ${registro.cubo}">${registro.cubo}</span>
+      </div>
+      <div class="meta">
+        BOA ${registro.fecha_boa} · reglas: ${registro.reglas_disparadas.join(", ")} ·
+        detectado ${formatoFecha(registro.primera_deteccion_utc)} ·
+        ${registro.revisado ? "revisado" : "pendiente de revisión"}
+      </div>
+      <div class="meta"><a href="${registro.url}" target="_blank" rel="noopener">Ver en el BOA →</a></div>
+    </div>`;
+}
+
+function pintarDocumentoEduca(doc) {
+  return `
+    <div class="documento">
+      <div class="cabecera">
+        <div class="titulo">${doc.texto}</div>
+        <span class="pastilla ${doc.revisado ? "ok" : "aviso"}">${doc.revisado ? "revisado" : "pendiente"}</span>
+      </div>
+      <div class="meta">
+        página: ${doc.pagina_origen} · detectado ${formatoFecha(doc.primera_deteccion_utc)}
+      </div>
+      <div class="meta"><a href="${doc.url}" target="_blank" rel="noopener">Abrir PDF →</a></div>
+    </div>`;
+}
+
+async function iniciar() {
+  let estado, convocatorias, estadoEduca, documentosEduca;
+  try {
+    [estado, convocatorias, estadoEduca, documentosEduca] = await Promise.all([
+      cargarJSON("data/estado.json"),
+      cargarJSON("data/convocatorias.json").catch(() => []),
+      cargarJSON("data/estado_educa.json").catch(() => ({})),
+      cargarJSON("data/documentos_educa.json").catch(() => []),
+    ]);
+  } catch (err) {
+    document.getElementById("error-global").style.display = "block";
+    document.getElementById("error-global").innerHTML =
+      `No se han podido cargar los datos (${err.message}). ` +
+      `Este panel necesita servirse por HTTP, no abrirse directamente como archivo: ` +
+      `ejecuta <code>python -m http.server</code> en la carpeta del proyecto y abre ` +
+      `<code>http://localhost:8000</code>.`;
+    return;
+  }
+
+  document.getElementById("contenido").style.display = "block";
+
+  const ultimaEduca = Object.values(estadoEduca)[0]?.ultima_comprobacion_utc ?? null;
+  document.getElementById("tarjeta-estado").innerHTML =
+    pintarEstadoColector(
+      "Colector A — BOA",
+      estado.ultima_ejecucion_utc,
+      `${estado.documentos_totales} documentos el ${estado.fecha_boa_consultada}, ${estado.documentos_marcados} marcados` +
+      (estado.error ? ` · error: ${estado.error}` : "")
+    ) +
+    pintarEstadoColector(
+      "Colector B — educa.aragon.es",
+      ultimaEduca,
+      `${documentosEduca.length} documentos registrados`
+    );
+
+  const contConv = document.getElementById("contador-convocatorias");
+  const listaConv = document.getElementById("lista-convocatorias");
+  contConv.textContent = convocatorias.length ? `(${convocatorias.length})` : "";
+  listaConv.innerHTML = convocatorias.length
+    ? [...convocatorias].reverse().map(pintarConvocatoria).join("")
+    : '<div class="vacio">Sin documentos marcados todavía.</div>';
+
+  const contEduca = document.getElementById("contador-educa");
+  const listaEduca = document.getElementById("lista-educa");
+  contEduca.textContent = documentosEduca.length ? `(${documentosEduca.length})` : "";
+  listaEduca.innerHTML = documentosEduca.length
+    ? [...documentosEduca].reverse().map(pintarDocumentoEduca).join("")
+    : '<div class="vacio">Sin documentos registrados todavía.</div>';
+}
+
+iniciar();
+</script>
+</body>
+</html>
