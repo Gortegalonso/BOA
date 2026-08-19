@@ -27,7 +27,7 @@ cómo se ejecuta, sin repetir el detalle de las secciones 1-9 (la especificació
 | 5. Extracción con LLM | PDF → JSON (plazos, módulos, sedes) | ✅ completa, verificada contra las APIs reales |
 | 6. Cruce alumno-módulo | Qué debe inscribir cada alumno | ✅ completa, verificada extremo a extremo con la convocatoria real |
 | 7. Alertas y robustez operativa | Canario, keepalive, pruebas de contrato/regresión/estacional | ✅ completa, adelantada junto con la Fase 1 |
-| — Panel (GitHub Pages / `index.html`) | Visualización local del estado | ✅ completa (18/08/2026) |
+| — Panel (GitHub Pages / `index.html`) | Visualización del estado, local y pública, con login | ✅ completa, verificada visualmente y con acceso por usuario/contraseña (19/08/2026) |
 | — Suscripción por correo al BOA | Canal 1 de 7.1, respaldo del RSS | ⏳ dos tareas pendientes, ver 0.5: alta manual (usuario) + lector IMAP (sin construir) |
 
 Detalle de cómo se hizo cada fase, decisiones tomadas y por qué: sección 10. Lo que queda
@@ -104,9 +104,16 @@ data/                           # Estado y resultados. Se versiona (son datos p�
 
 alumnos/                        # Vacío a propósito. Aquí va el CSV de alumnos del usuario,
 │                                # NUNCA versionado (.gitignore lo excluye). Ver sección 8.
-index.html                      # Panel local (sección 6, 9.1): fetch() de los cuatro
-│                                # data/*.json de arriba. Servir con `python -m http.server`
-│                                # (abrir por file:// falla por CORS). Sin datos de alumnos.
+index.html                      # Panel (sección 6, 9.1, 10): fetch() de los cuatro
+│                                # data/*.json de arriba. Local con `python -m http.server`
+│                                # (abrir por file:// falla por CORS), y también público vía
+│                                # GitHub Pages una vez está en la rama por defecto — sin
+│                                # datos de alumnos en ningún caso. Pantalla de login antes de
+│                                # mostrar nada (usuario/hash de la contraseña al principio del
+│                                # <script>) — es una cortina, no seguridad real, ver sección 10.
+img/
+└── fondo_index.png             # Ilustración de fondo del panel (sección 10). Solo se
+                                 # aplica en modo claro del CSS de index.html.
 .gitignore                      # Excluye alumnos/, CSVs, credenciales, entorno virtual
 requirements.txt                # pytest (dev) + pymupdf (runtime, solo para extraccion.py)
 CLAUDE.md                       # Este documento
@@ -187,16 +194,19 @@ versiona.
    de títulos de hostelería (antes pendiente `[VERIFICAR]`) queda confirmada con códigos
    oficiales reales en 7.6, salvo la duda menor sobre si `HOT301`-`HOT303` (turismo) también
    los imparte el centro del usuario.
-3. **Panel local (`index.html`) — completado el 18/08/2026.** Ver el detalle en sección 10.
-   Antes de construirlo se ejecutó `python -m boa_monitor.main 2026-08-06` para poblar
-   `data/convocatorias.json` con el positivo real (la propia ORDEN ECU/1145/2026) en vez de
-   diseñar contra un fichero vacío. Esa ejecución destapó una errata menor en `main.py` (el
-   print de consola cortaba el título a 100 caracteres a media palabra) — corregida quitando
-   el límite. El panel se probó sirviéndolo con `python -m http.server` y comprobando que los
-   cuatro ficheros de `data/` se sirven y encajan con lo que espera el JavaScript, pero no se
-   ha verificado visualmente en un navegador real (sin herramienta de automatización de
-   navegador en el entorno donde se construyó) — pendiente de que el usuario lo confirme a
-   simple vista.
+3. **Panel (`index.html`) — completado el 18/08/2026, verificado visualmente y publicado el
+   19/08/2026.** Ver el detalle completo en sección 10. Antes de construirlo se ejecutó
+   `python -m boa_monitor.main 2026-08-06` para poblar `data/convocatorias.json` con el
+   positivo real (la propia ORDEN ECU/1145/2026) en vez de diseñar contra un fichero vacío.
+   Esa ejecución destapó una errata menor en `main.py` (el print de consola cortaba el título
+   a 100 caracteres a media palabra) — corregida quitando el límite. El 19/08/2026 el usuario
+   lo abrió en un navegador real (pendiente que quedó anotado en la sección 11) y confirmó que
+   se ve correctamente con los datos reales; ese mismo día se le añadió una ilustración de
+   fondo (`img/fondo_index.png`, ver sección 10) y, al hacer `git push` del trabajo pendiente,
+   se descubrió que GitHub Pages llevaba sirviendo la página por defecto de Jekyll (a partir
+   de `README.md`) porque nunca había habido un `index.html` en el remoto — desde el push, el
+   panel real es público en `https://gortegalonso.github.io/BOA/`, además de servirse en
+   local.
 4. **Suscripción por correo al BOA (canal 1 de 7.1) — dos tareas separadas, ninguna hecha
    todavía (anotado 18/08/2026).**
    1. **Alta de la suscripción, puramente manual**: darse de alta en la suscripción gratuita
@@ -400,12 +410,20 @@ boletines provinciales, que **no publican convocatorias educativas autonómicas*
 | Dónde | Qué |
 |---|---|
 | Repo público + Actions | Cron, colectores, filtro, extracción, caché del BOA, `convocatorias.json`. Todo dato público. |
-| Local | `alumnos.csv`, cruce, `index.html`. No sale de la máquina del usuario. |
+| Local | `alumnos.csv`, cruce. No sale de la máquina del usuario. |
 | Puente | `git pull` |
 
 Detalle práctico: si el `index.html` se abre por `file://` y hace `fetch()` de un JSON local,
 el navegador lo bloquea por CORS. Solución sin instalar nada: `python3 -m http.server` en la
 carpeta y abrir `localhost:8000`.
+
+**Corrección (19/08/2026): `index.html` ya no es solo local.** Al empujar el commit pendiente
+al remoto se descubrió que GitHub Pages estaba activo y sirviendo la página por defecto a
+partir de `README.md` — en cuanto `index.html` llegó a la rama por defecto, Pages empezó a
+servir el panel real en `https://gortegalonso.github.io/BOA/`. Esto es coherente con la regla
+de la sección 8 (nunca datos de alumnos en `index.html` ni en los `data/*.json`), así que no
+hay problema de privacidad, pero **corrige la tabla de arriba**: el panel es público, no solo
+local. Detalle completo en sección 10.
 
 ### Trampa crítica de GitHub Actions
 
@@ -983,12 +1001,109 @@ la lista de documentos detectados por Colector B con enlace al PDF. Ningún dato
 (regla 8). Si se abre por `file://` en vez de servirse por HTTP muestra un aviso explicando
 que hace falta `python -m http.server` (CORS, ver sección 6).
 
-**Verificación parcial**: servido con `python -m http.server` contra los datos reales
-generados arriba, se comprobó por `curl` que los cinco recursos (`index.html` y los cuatro
-JSON) devuelven 200 y que la forma de cada JSON encaja con lo que espera el JavaScript. No se
-ha verificado visualmente en un navegador real — no había herramienta de automatización de
+**Verificación parcial (18/08/2026)**: servido con `python -m http.server` contra los datos
+reales generados arriba, se comprobó por `curl` que los cinco recursos (`index.html` y los
+cuatro JSON) devuelven 200 y que la forma de cada JSON encaja con lo que espera el JavaScript.
+No se verificó visualmente en un navegador real — no había herramienta de automatización de
 navegador disponible en el entorno donde se construyó. Pendiente de que el usuario lo abra una
 vez y confirme que se ve bien.
+
+### Publicación, verificación visual y fondo del panel (19/08/2026)
+
+Tres hallazgos seguidos, todos el mismo día, que completan el pendiente de la sección 11.
+
+**1. El commit del panel llevaba un día sin llegar al remoto.** Al arrancar en frío esta
+sesión, `git status` mostraba `CLAUDE.md`, `main.py`, `data/estado.json`, `data/vistos.json`
+modificados y `data/convocatorias.json`/`index.html` sin trackear — es decir, todo el trabajo
+del 18/08 (Fases 5-6, panel) estaba completo mas nunca se había comiteado. Se comiteó
+(`6226bca`). Al hacer `git push`, GitHub lo rechazó: `colector.yml` y `colector-educa.yml`
+habían generado 20 commits automáticos («chore: colecta...») en el remoto mientras tanto. Se
+resolvió con `git merge origin/main`: `data/vistos.json` fusionó solo (los DOCN nuevos de cada
+lado ocupan rangos numéricos disjuntos, sin solaparse); el único conflicto real fue
+`data/estado.json` (la prueba de vida, 9.1), resuelto quedándose con la ejecución en vivo más
+reciente de origin (más representativa del estado actual que la ejecución manual de backfill
+del 6/08, cuyo único propósito —poblar `convocatorias.json`— ya había quedado guardado aparte).
+**Lección operativa para la próxima vez que haya trabajo local sin empujar**: hacer
+`git fetch`/`git status -sb` antes de un `push` en este repo, precisamente porque los cronjobs
+comitean con frecuencia y un push a ciegas puede chocar.
+
+**2. GitHub Pages llevaba sirviendo la página por defecto de Jekyll, no el panel.**
+`https://gortegalonso.github.io/BOA/` mostraba solo un título "BOA" y el subtítulo
+"Monitorizacion BOA" — que resultaron ser exactamente el contenido de `README.md`
+(`git show origin/main:README.md`). No es un fallo de configuración de Pages: simplemente
+nunca había habido un `index.html` en el remoto hasta el push del punto 1, así que Pages caía
+al comportamiento por defecto (Jekyll construyendo la home desde el README). Con el push, Pages
+reconstruye y sirve el `index.html` real automáticamente — sin cambiar nada en la
+configuración del repo. Esto **corrige la sección 6**: el panel no es solo local, también es
+público desde este momento (siguen sin publicarse datos de alumnos, regla 8).
+
+**3. Verificación visual real, con una corrección de diseño.** El usuario abrió el panel
+servido por `http.server` y confirmó que las tarjetas de estado, la convocatoria BOA real y
+los 4 documentos de educa.aragon.es se ven correctamente con los datos reales — cierra el
+pendiente que quedó abierto el 18/08 (sección 11). De paso pidió añadir una imagen de fondo
+(`Fondo index.png`, movida a `img/fondo_index.png`): una ilustración vertical de 1024×1536 px
+(ratio 2:3) con doodles sobre fondo azul claro uniforme (`rgb(198,228,253)` ≈ `#c6e4fd`,
+muestreado con Pillow). Primer intento con `background-size: cover` **salió mal**: en una
+pantalla panorámica, `cover` amplía por el lado que hace falta para cubrir el ancho, y con una
+imagen 2:3 eso es el ancho — factor ≈1,85× en la pantalla probada —, lo que dejaba solo la
+franja superior de la imagen visible (2 personajes muy ampliados) y recortaba el resto por
+debajo del viewport. El usuario lo detectó al probarlo ("se ve la imagen bastante extendida en
+vez de verse la mayoría de los dibujos"). Corregido cambiando a `background-size: contain`
+(se ve la ilustración completa, sin recortes) y ajustando `--fondo` en modo claro de `#f5f5f2`
+a `#c6e4fd` — el mismo azul de la imagen, muestreado directamente — para que el espacio sobrante
+a los lados quede indistinguible del fondo de la propia ilustración. Solo se aplica en modo
+claro (`--fondo-imagen: none` bajo `prefers-color-scheme: dark`, mismo patrón que el resto de
+variables del tema oscuro): la ilustración es de tonos claros y desentonaría con las tarjetas
+oscuras. `background-attachment: fixed` para que no se estire ni se repita según crezca el
+contenido de la página con más documentos.
+
+### Imagen reordenada a los márgenes, acceso con contraseña y guía de uso (19/08/2026, continuación)
+
+Con `contain` ya no se recortaba nada, pero en pantallas anchas la imagen (retrato, 2:3) queda
+angosta y centrada, dejando la mayoría de los dibujos apretados en dos columnas estrechas. El
+usuario pidió recolocar los propios dibujos en los márgenes en vez de seguir ajustando el CSS.
+Comprobado con Pillow que la franja vertical central de la imagen original (x≈508-516 de 1024)
+está vacía en toda su altura — ningún dibujo la atraviesa — se partió la imagen por la mitad
+(0-512 y 512-1024) y se recompuso en un lienzo más ancho (2560×1536: mitad izquierda pegada al
+borde izquierdo, mitad derecha al borde derecho, hueco de 1536 px en medio) relleno con el color
+medio exacto de la propia imagen (`#c6e4fc`, muestreado por promedio de borde, no por un único
+punto). Sin redimensionar nada — es un recorte y recolocación, no un reescalado — así que no
+hay pérdida de calidad. El resultado: los personajes quedan fijos en los márgenes izquierdo y
+derecho y el centro (donde vive el contenido) queda despejado, con `background-size: contain`
+sin necesidad de tocar el CSS de nuevo. Copia de la imagen original (antes de este recorte)
+guardada fuera del repo por si hace falta rehacer el recorte con otra distribución.
+
+**Acceso con usuario y contraseña.** El usuario pidió una primera pantalla de login para que,
+aunque el repositorio sea público, solo pueda entrar la persona designada. Implementado
+íntegramente en el propio `index.html` (overlay `#login` a pantalla completa que tapa
+`<main id="panel-principal">` hasta que se autentica; sesión recordada en `localStorage`, con
+enlace «Cerrar sesión» en el pie). El usuario se compara en texto plano; la contraseña se
+compara por su hash SHA-256 (`crypto.subtle.digest`, sin librerías) para no dejarla literal en
+el código fuente. **Importante — esto no es seguridad real, es una cortina, y hay que saber
+por qué**: GitHub Pages sirve todos los ficheros del repositorio igual de públicos exista o no
+esta pantalla; cualquiera puede seguir pidiendo `data/estado.json` (o cualquier otro fichero)
+directamente por URL, sin pasar por el login, y el propio `index.html` — con el usuario y el
+hash de la contraseña — es público y legible por cualquiera que mire el código fuente de la
+página. Como ningún dato de alumnos vive en este repo (regla 8) el riesgo real es bajo, pero
+**no depender de esto para nada que sí sea sensible**. El usuario y la contraseña inventados
+para esta primera versión se le comunicaron directamente al usuario en la conversación (no se
+repiten aquí porque este documento se commitea a un repositorio público); están definidos como
+`LOGIN_USUARIO` y `LOGIN_CLAVE_HASH` al principio del `<script>` de `index.html` — para
+cambiarlos, editar `LOGIN_USUARIO` y sustituir `LOGIN_CLAVE_HASH` por el SHA-256 hexadecimal de
+la nueva contraseña.
+
+**Guía de uso para personal no técnico.** A petición del usuario, documento aparte (no vive en
+este repositorio: es un Artifact publicado, pensado para compartir o imprimir, no para leer con
+un editor de código) con dos partes: un esquema visual de cómo funciona el flujo completo
+(los dos vigilantes automáticos → el filtro con sus tres resultados → la lectura del documento
+oficial y el cruce con la lista de alumnos → el panel) y una guía paso a paso de uso diario y de
+qué ocurre cuando sale la convocatoria real, en lenguaje llano, sin jerga técnica. Incluye el
+usuario y la contraseña del panel en una caja de acceso — al ser un Artifact, es privado por
+defecto hasta que el usuario decida compartirlo, a diferencia de este `CLAUDE.md`.
+
+**Verificado visualmente por el usuario ("funciona bien")**: la imagen recolocada a los
+márgenes y la pantalla de login, probadas juntas en el panel real. Cierra el ciclo de esta
+sesión de trabajo del 19/08/2026.
 
 ---
 
@@ -1031,10 +1146,10 @@ sección 3), y las páginas concretas que debe vigilar el Colector B (sección 7
       la suscripción gratuita en la web del BOA, manual, pendiente del usuario; (2) módulo
       `boa_monitor/correo.py` que la lea por IMAP como respaldo del RSS — sin empezar. No
       bloquea nada: el RSS (canal 2) es el canal validado en producción.
-- [ ] **Verificación visual del panel (`index.html`) en un navegador real**, anotado el
-      18/08/2026. Construido y probado por `curl` contra los datos reales (ver sección 10),
-      pero sin comprobación visual — falta que el usuario lo abra con
-      `python -m http.server` y confirme que se ve correctamente.
+- [x] ~~Verificación visual del panel (`index.html`) en un navegador real.~~ **Resuelto el
+      19/08/2026**: el usuario lo abrió servido por `python -m http.server` y confirmó que las
+      tarjetas de estado, la convocatoria real y los documentos de educa.aragon.es se ven
+      correctamente (ver sección 10). De paso quedó publicado también en GitHub Pages.
 
 ---
 
