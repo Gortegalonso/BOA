@@ -11,5 +11,17 @@
     "cubo": "seguro",
     "primera_deteccion_utc": "2026-08-18T18:50:14.261150+00:00",
     "revisado": false
+  },
+  {
+    "docn": "007960811",
+    "titulo": "BOA 25/08/26 - ORDEN ECU/1254/2026, de 18 de agosto, por la que se aprueban las instrucciones de carácter transitorio para la organización y desarrollo de las actividades complementarias, extraescolares, viajes de estudio, intercambios escolares y movilidades educativas, que se desarrollen fuera del recinto escolar, en los centros docentes públicos de la Comunidad Autónoma de Aragón.",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007960811",
+    "fecha_boa": "2026-08-25",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-08-25T06:36:27.555087+00:00",
+    "revisado": false
   }
 ]
