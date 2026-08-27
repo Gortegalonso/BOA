@@ -23,5 +23,17 @@
     "cubo": "ambiguo",
     "primera_deteccion_utc": "2026-08-25T06:36:27.555087+00:00",
     "revisado": false
+  },
+  {
+    "docn": "007960860",
+    "titulo": "BOA 27/08/26 - RESOLUCIÓN de 28 de julio de 2026, del Director General de Política Educativa, Ordenación, Equidad y Formación, por la que se aprueba el listado de actividades autorizadas para el período comprendido entre el 1 de septiembre de 2026 y el 28 de febrero de 2027 (primer semestre), referido a la convocatoria a los agentes sociales, entidades sin ánimo de lucro e instituciones públicas para el reconocimiento de actividades de formación permanente del profesorado no universitario.",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007960860",
+    "fecha_boa": "2026-08-27",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-08-27T17:13:26.373671+00:00",
+    "revisado": false
   }
 ]
