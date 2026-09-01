@@ -35,5 +35,17 @@
     "cubo": "ambiguo",
     "primera_deteccion_utc": "2026-08-27T17:13:26.373671+00:00",
     "revisado": false
+  },
+  {
+    "docn": "007960912",
+    "titulo": "BOA 1/09/26 - RESOLUCIÓN de 17 de agosto de 2026, del Director General de la Función Pública, por la que se aprueba la lista definitiva de personas admitidas y excluidas a las pruebas selectivas para ingreso, por turno independiente para personas con discapacidad, en el Cuerpo de Funcionarios Técnicos de la Administración de la Comunidad Autónoma de Aragón, Escala Técnica Facultativa, Educadores Sociales, y se señala lugar y fecha para la realización del primer ejercicio. (Código de convocatoria 250120).",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007960912",
+    "fecha_boa": "2026-09-01",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-09-01T10:57:12.735590+00:00",
+    "revisado": false
   }
 ]
