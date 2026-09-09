@@ -47,5 +47,17 @@
     "cubo": "ambiguo",
     "primera_deteccion_utc": "2026-09-01T10:57:12.735590+00:00",
     "revisado": false
+  },
+  {
+    "docn": "007961057",
+    "titulo": "BOA 9/09/26 - CORRECCIÓN de errores de la Orden ECU/1062/2026, de 7 de julio, por la que se aprueban las instrucciones para los Centros Concertados de la Comunidad Autónoma de Aragón para el curso 2026/2027, de la Orden ECU/1066/2026, de 7 de julio, por la que se aprueban las instrucciones para los Centros Públicos Integrados de Formación Profesional de la Comunidad Autónoma de Aragón para el curso 2026/2027, de la Orden ECU/1069/2026, de 7 julio, por la que se aprueban las instrucciones para los Institutos de Educación Secundaria de la Comunidad Autónoma de Aragón para el curso 2026/2027 y de la Orden ECU/1131/2026, de 21 de julio, por la que se aprueban las instrucciones para el Centro de Formación Profesional Campus Digital de la Comunidad Autónoma de Aragón para el curso 2026/2027.",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007961057",
+    "fecha_boa": "2026-09-09",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-09-09T10:37:24.125825+00:00",
+    "revisado": false
   }
 ]
