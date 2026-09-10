@@ -59,5 +59,29 @@
     "cubo": "ambiguo",
     "primera_deteccion_utc": "2026-09-09T10:37:24.125825+00:00",
     "revisado": false
+  },
+  {
+    "docn": "007961067",
+    "titulo": "BOA 10/09/26 - CORRECCIÓN de errores de la Resolución de 7 de abril de 2026, del Director General de la Función Pública, por la que se aprueban las listas de espera derivadas del correspondiente proceso selectivo para la provisión con carácter interino de puestos de trabajo correspondientes al Cuerpo Auxiliar de la Administración de la Comunidad Autónoma de Aragón, Escala de Auxiliares Facultativos, Auxiliares de Educación Especial (24/0091).",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007961067",
+    "fecha_boa": "2026-09-10",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-09-10T10:24:54.832992+00:00",
+    "revisado": false
+  },
+  {
+    "docn": "007961068",
+    "titulo": "BOA 10/09/26 - CORRECCIÓN de errores de la Resolución de 26 de junio de 2026, del Director General de la Función Pública, por la que se aprueba la lista de espera derivada del correspondiente proceso selectivo para la provisión con carácter interino de puestos de trabajo correspondientes al Cuerpo Ejecutivo de la Administración de la Comunidad Autónoma de Aragón, Escala de Ayudantes Facultativos, Técnicos en Educación Infantil. (Código de convocatoria 240090).",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007961068",
+    "fecha_boa": "2026-09-10",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-09-10T10:24:54.832992+00:00",
+    "revisado": false
   }
 ]
