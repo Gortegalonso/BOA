@@ -83,5 +83,29 @@
     "cubo": "ambiguo",
     "primera_deteccion_utc": "2026-09-10T10:24:54.832992+00:00",
     "revisado": false
+  },
+  {
+    "docn": "007961254",
+    "titulo": "BOA 22/09/26 - RESOLUCIÓN de 8 de septiembre de 2026, del Director General de la Función Pública, por la que se modifica la composición del Tribunal calificador de las pruebas selectivas para ingreso en el Cuerpo Ejecutivo de la Administración de la Comunidad Autónoma de Aragón, Escala de Ayudantes Facultativos, Técnicos en Educación Infantil. (Código de convocatoria 250106).",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007961254",
+    "fecha_boa": "2026-09-22",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-09-22T10:47:52.123422+00:00",
+    "revisado": false
+  },
+  {
+    "docn": "007961255",
+    "titulo": "BOA 22/09/26 - RESOLUCIÓN de 8 de septiembre de 2026, del Director General de la Función Pública, por la que se modifica la composición del Tribunal calificador de las pruebas selectivas para ingreso, por turno independiente para personas con discapacidad física o sensorial, en el Cuerpo Ejecutivo de la Administración de la Comunidad Autónoma de Aragón, Escala de Ayudantes Facultativos, Técnicos en Educación Infantil. (Código de convocatoria 250129).",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007961255",
+    "fecha_boa": "2026-09-22",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-09-22T10:47:52.123422+00:00",
+    "revisado": false
   }
 ]
