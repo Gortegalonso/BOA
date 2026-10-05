@@ -107,5 +107,29 @@
     "cubo": "ambiguo",
     "primera_deteccion_utc": "2026-09-22T10:47:52.123422+00:00",
     "revisado": false
+  },
+  {
+    "docn": "007961503",
+    "titulo": "BOA 5/10/26 - RESOLUCIÓN de 21 de septiembre de 2026, del Director General de la Función Pública, por la que se aprueba la lista definitiva de personas admitidas y excluidas a las pruebas selectivas para ingreso en el Cuerpo Ejecutivo de la Administración de la Comunidad Autónoma de Aragón, Escala de Ayudantes Facultativos, Técnicos en Educación Infantil, y se señala lugar y fecha para la celebración del primer y segundo ejercicio. (Código de convocatoria 250106).",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007961503",
+    "fecha_boa": "2026-10-05",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-10-05T21:21:12.981387+00:00",
+    "revisado": false
+  },
+  {
+    "docn": "007961504",
+    "titulo": "BOA 5/10/26 - RESOLUCIÓN de 22 de septiembre de 2026, del Director General de la Función Pública, por la que se aprueba la lista definitiva de personas admitidas y excluidas a las pruebas selectivas para ingreso, por turno independiente para personas con discapacidad física o sensorial, en el Cuerpo Ejecutivo de la Administración de la Comunidad Autónoma de Aragón, Escala de Ayudantes Facultativos, Técnicos en Educación Infantil, y se señala lugar y fecha para la celebración del primer y segundo ejercicio. (Código de convocatoria 250129).",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007961504",
+    "fecha_boa": "2026-10-05",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-10-05T21:21:12.981387+00:00",
+    "revisado": false
   }
 ]
