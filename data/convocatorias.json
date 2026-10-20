@@ -131,5 +131,17 @@
     "cubo": "ambiguo",
     "primera_deteccion_utc": "2026-10-05T21:21:12.981387+00:00",
     "revisado": false
+  },
+  {
+    "docn": "007961859",
+    "titulo": "BOA 20/10/26 - RESOLUCIÓN de 6 de octubre de 2026, de la Rectora de la Universidad de Zaragoza, por la que se acuerda publicar en el \"Boletín Oficial de Aragón\" el Acuerdo de 25 de septiembre de 2026, del Consejo de Gobierno de la Universidad de Zaragoza, por el que se aprueba la creación del Instituto de Prospectiva e Investigación en Educación y Ciudadanía (IPIEC).",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007961859",
+    "fecha_boa": "2026-10-20",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-10-20T10:56:03.978126+00:00",
+    "revisado": false
   }
 ]
