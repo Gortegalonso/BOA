@@ -143,5 +143,17 @@
     "cubo": "ambiguo",
     "primera_deteccion_utc": "2026-10-20T10:56:03.978126+00:00",
     "revisado": false
+  },
+  {
+    "docn": "007962548",
+    "titulo": "BOA 16/11/26 - RESOLUCIÓN de 29 de octubre de 2026, del Director General de Política Educativa, Ordenación, Equidad y Formación, por la que se convoca la prueba libre para la obtención del título de Bachiller para mayores de veinte años en la Comunidad Autónoma de Aragón en el año 2027.",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007962548",
+    "fecha_boa": "2026-11-16",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-11-16T16:44:47.456386+00:00",
+    "revisado": false
   }
 ]
