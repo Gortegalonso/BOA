@@ -167,5 +167,17 @@
     "cubo": "ambiguo",
     "primera_deteccion_utc": "2026-11-17T00:38:29.830500+00:00",
     "revisado": false
+  },
+  {
+    "docn": "007962806",
+    "titulo": "BOA 26/11/26 - RESOLUCIÓN 12 de noviembre de 2026, de la Universidad de Zaragoza, por la que se resuelve anular la convocatoria de pruebas selectivas para el ingreso, mediante el turno de acceso libre, en la Escala de Técnicos Superiores de Educación Física de la Universidad de Zaragoza, mediante el sistema de oposición, publicada mediante Resolución de 11 de septiembre de 2026, de la Universidad de Zaragoza. (\"Boletín Oficial de Aragón\", número 185, de 23 de septiembre de 2026).",
+    "url": "https://www.boa.aragon.es/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&BASE=BOLE&SEC=BUSQUEDA_AVANZADA&DOCN=007962806",
+    "fecha_boa": "2026-11-26",
+    "reglas_disparadas": [
+      "R3"
+    ],
+    "cubo": "ambiguo",
+    "primera_deteccion_utc": "2026-11-26T01:33:47.417602+00:00",
+    "revisado": false
   }
 ]
