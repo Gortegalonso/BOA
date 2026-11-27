@@ -2,7 +2,7 @@
 <rss  version="2.0">
 <channel>
 <title>BOA - RSS</title>
-<link>/cgi-bin/EBOA/BRSCGI?CMD=RSSLST&amp;amp;DOCS=1-21&amp;amp;BASE=BOLE&amp;amp;PIECE=&amp;amp;DOCORDER=LIFO&amp;amp;SEPARADOR=&amp;PUBL-C=20261127</link>
+<link>/cgi-bin/EBOA/BRSCGI?CMD=RSSLST&amp;amp;DOCS=1-22&amp;amp;BASE=BOLE&amp;amp;PIECE=&amp;amp;DOCORDER=LIFO&amp;amp;SEPARADOR=&amp;PUBL-C=20261127</link>
 <description>boletin oficial de aragon</description>
 <language>es_ES</language>
 <copyright>Gobierno de Aragon</copyright>
@@ -152,6 +152,13 @@ dominio público forestal del Monte de Utilidad Pública H000036 - Costadué, Acín,
 <title>BOA 27/11/26 - ANUNCIO del Instituto Aragonés de Gestión Ambiental, por el que se somete a información pública y concurrencia competitiva el expediente para la autorización de concesión de uso privativo para la ocupación temporal de terrenos en el
 dominio público forestal del Monte de Utilidad Pública H000268 - Puerto de Astún, ubicado en el municipio de Jaca, provincia de Huesca y titularidad del Ayuntamiento de Jaca. (Número de Expediente: INAGA G220000/44/2026/0044).</title>
 <link>/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&amp;BASE=BOLE&amp;SEC=BUSQUEDA_AVANZADA&amp;DOCN=007962846</link>
+<pubDate>11/27/26</pubDate>
+</item>
+
+<item>
+<title>BOA 27/11/26 - ORDEN DBF/1710/2026, de 27 de noviembre, por la que se establecen los precios de las plazas contratadas o concertadas por el Instituto Aragonés de Servicios Sociales, en ejercicio de sus competencias en materia de Acción
+Concertada.</title>
+<link>/cgi-bin/EBOA/BRSCGI?CMD=VERDOC&amp;BASE=BOLE&amp;SEC=BUSQUEDA_AVANZADA&amp;DOCN=007962847</link>
 <pubDate>11/27/26</pubDate>
 </item>
 </channel>
